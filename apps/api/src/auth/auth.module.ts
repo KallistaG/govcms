@@ -4,6 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -12,13 +13,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       useFactory: () => ({
         secret: process.env.JWT_SECRET || 'govcms_super_secret_jwt_key_change_in_production_2026',
         signOptions: {
-          expiresIn: process.env.JWT_EXPIRATION || '8h',
+          expiresIn: process.env.JWT_EXPIRATION || '15m',
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService, PassportModule, JwtModule],
+  providers: [AuthService, JwtStrategy, RolesGuard],
+  exports: [AuthService, PassportModule, JwtModule, RolesGuard],
 })
 export class AuthModule {}

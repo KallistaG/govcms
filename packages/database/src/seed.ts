@@ -1,7 +1,7 @@
 import { prisma } from './client';
 
 async function main() {
-  console.log('🌱 Starting GovCMS Database Seeding...');
+  console.log('🌱 Starting GovCMS Database Seeding with Enterprise Roles...');
 
   // Seed Default Agency
   const agency = await prisma.agency.upsert({
@@ -15,28 +15,55 @@ async function main() {
     },
   });
 
-  console.log('✅ Created Agency:', agency.name);
+  console.log('✅ Agency Ready:', agency.name);
 
-  // Seed Initial Admin User (password: Password123!)
-  // bcrypt hash for Password123!
+  // Default hashed password for demo users: Password123!
   const defaultPasswordHash = '$2b$10$w8T0M4j6lX3kG0Z/h2i3.u5E90j/A9bE1mX9F5K6L7M8N9O0P1Q2R';
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@gov.ph' },
-    update: {},
-    create: {
-      email: 'admin@gov.ph',
-      passwordHash: defaultPasswordHash,
-      firstName: 'System',
-      lastName: 'Administrator',
-      role: 'SUPER_ADMIN',
-      agencyId: agency.id,
+  const initialUsers = [
+    {
+      email: 'superadmin@gov.ph',
+      firstName: 'Super',
+      lastName: 'Admin',
+      role: 'SUPER_ADMIN' as const,
     },
-  });
+    {
+      email: 'admin@gov.ph',
+      firstName: 'Agency',
+      lastName: 'Administrator',
+      role: 'ADMINISTRATOR' as const,
+    },
+    {
+      email: 'editor@gov.ph',
+      firstName: 'Content',
+      lastName: 'Editor',
+      role: 'EDITOR' as const,
+    },
+    {
+      email: 'publisher@gov.ph',
+      firstName: 'Official',
+      lastName: 'Publisher',
+      role: 'PUBLISHER' as const,
+    },
+  ];
 
-  console.log('✅ Created Super Admin User:', admin.email);
+  for (const u of initialUsers) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: { role: u.role },
+      create: {
+        email: u.email,
+        passwordHash: defaultPasswordHash,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+        agencyId: agency.id,
+      },
+    });
+    console.log(`✅ Seeded User [${user.role}]:`, user.email);
+  }
 
-  console.log('✨ GovCMS Seeding Complete.');
+  console.log('✨ GovCMS Role & User Seeding Complete.');
 }
 
 main()
