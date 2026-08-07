@@ -32,7 +32,12 @@ export class MenusService {
     });
   }
 
-  async getPublicMenuByLocation(location: MenuLocationEnum) {
+  async getPublicMenuByLocation(locationInput: string) {
+    const locUpper = String(locationInput || '').toUpperCase();
+    let location: MenuLocationEnum = MenuLocationEnum.HEADER_MENU;
+    if (locUpper.includes('FOOTER')) location = MenuLocationEnum.FOOTER_MENU;
+    if (locUpper.includes('SIDEBAR')) location = MenuLocationEnum.SIDEBAR_MENU;
+
     const menu = await this.prisma.menu.findFirst({
       where: { location },
       include: {

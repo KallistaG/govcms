@@ -8,6 +8,7 @@ import {
   Mail,
   MapPin,
   AlertTriangle,
+  ChevronDown,
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
@@ -41,6 +42,20 @@ async function getSiteConfig() {
   };
 }
 
+async function getPublicTheme() {
+  try {
+    const res = await fetch(`${API_URL}/theme/public`, { next: { revalidate: 60 } });
+    if (res.ok) return await res.json();
+  } catch {
+    // fallback
+  }
+  return {
+    websiteName: 'Department of Information and Communications Technology',
+    primaryColor: '#1d4ed8',
+    secondaryColor: '#7c3aed',
+  };
+}
+
 async function getPublicMenu(location: string) {
   try {
     const res = await fetch(`${API_URL}/menus/public/${location}`, { next: { revalidate: 60 } });
@@ -52,13 +67,25 @@ async function getPublicMenu(location: string) {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSiteConfig();
-  const headerMenu = await getPublicMenu('HEADER_MENU');
-  const footerMenu = await getPublicMenu('FOOTER_MENU');
+  const [settings, theme, headerMenu, footerMenu] = await Promise.all([
+    getSiteConfig(),
+    getPublicTheme(),
+    getPublicMenu('HEADER'),
+    getPublicMenu('FOOTER'),
+  ]);
+
+  const primaryHex = theme.primaryColor || '#1d4ed8';
 
   return (
     <html lang="en" className="scroll-smooth">
       <head>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            :root {
+              --primary: ${primaryHex};
+            }
+          `
+        }} />
         {settings.analyticsId && (
           <script
             async
@@ -123,7 +150,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
-                  {settings.websiteName || 'GovCMS Agency Portal'}
+                  {settings.websiteName || theme.websiteName || 'GovCMS Agency Portal'}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-semibold">
                   GOV.PH Official Web Platform
@@ -131,7 +158,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </div>
             </Link>
 
-            {/* Dynamic Navigation Menu Items */}
+            {/* Dynamic Navigation Menu Items (with Submenus) */}
             <nav className="hidden md:flex items-center gap-1 text-xs font-semibold">
               <Link href="/" className="px-3 py-2 rounded-lg text-foreground hover:bg-accent hover:text-primary transition-colors">
                 Home
@@ -147,17 +174,37 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </Link>
 
               {headerMenu.items &&
-                headerMenu.items.map((item: any) => (
-                  <Link
-                    key={item.id}
-                    href={item.url}
-                    target={item.openInNewTab ? '_blank' : '_self'}
-                    className="px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-primary transition-colors flex items-center gap-1"
-                  >
-                    {item.title}
-                    {item.isExternal && <ExternalLink className="h-3 w-3 opacity-60" />}
-                  </Link>
-                ))}
+                headerMenu.items.map((item: any) => {
+                  const hasChildren = item.children && item.children.length > 0;
+                  return (
+                    <div key={item.id} className="relative group/menu">
+                      <Link
+                        href={item.url || '#'}
+                        target={item.openInNewTab ? '_blank' : '_self'}
+                        className="px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-primary transition-colors flex items-center gap-1"
+                      >
+                        {item.title}
+                        {hasChildren && <ChevronDown className="h-3 w-3 opacity-60" />}
+                        {item.isExternal && <ExternalLink className="h-3 w-3 opacity-60" />}
+                      </Link>
+
+                      {hasChildren && (
+                        <div className="absolute left-0 top-full hidden group-hover/menu:block min-w-48 bg-card border rounded-xl shadow-xl py-2 z-50 animate-in fade-in-50 slide-in-from-top-1">
+                          {item.children.map((child: any) => (
+                            <Link
+                              key={child.id}
+                              href={child.url || '#'}
+                              target={child.openInNewTab ? '_blank' : '_self'}
+                              className="block px-4 py-2 text-xs font-medium text-foreground hover:bg-accent hover:text-primary transition-colors"
+                            >
+                              {child.title}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </nav>
           </div>
         </header>
@@ -186,6 +233,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <li><Link href="/news" className="hover:text-white transition-colors">Press Releases & News</Link></li>
                   <li><Link href="/events" className="hover:text-white transition-colors">Agency Events Calendar</Link></li>
                   <li><Link href="/downloads" className="hover:text-white transition-colors">Freedom of Information (FOI)</Link></li>
+                  {footerMenu.items &&
+                    footerMenu.items.map((item: any) => (
+                      <li key={item.id}>
+                        <Link href={item.url || '#'} className="hover:text-white transition-colors">
+                          {item.title}
+                        </Link>
+                      </li>
+                    ))}
                 </ul>
               </div>
 
