@@ -7,6 +7,8 @@ import { MediaModule } from './media/media.module';
 import { MenusModule } from './menus/menus.module';
 import { PageBuilderModule } from './page-builder/page-builder.module';
 import { ThemeModule } from './theme/theme.module';
+import { UsersModule } from './users/users.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { ThemeModule } from './theme/theme.module';
     MenusModule,
     PageBuilderModule,
     ThemeModule,
+    UsersModule,
+    AuditLogsModule,
   ],
 })
 export class AppModule {}

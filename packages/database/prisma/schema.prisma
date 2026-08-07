@@ -67,6 +67,10 @@ model User {
   firstName           String
   lastName            String
   role                RoleEnum             @default(EDITOR)
+  department          String?              @default("Public Information Office")
+  phone               String?
+  avatarUrl           String?
+  permissions         Json?                // Array of custom permission strings e.g. ["content:publish", "media:upload"]
   isActive            Boolean              @default(true)
   failedLoginAttempts Int                  @default(0)
   lockoutUntil        DateTime?
@@ -229,11 +233,15 @@ model MenuItem {
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
-  action     String   // e.g. "LOGIN", "CREATE_CONTENT", "CREATE_MENU", "REORDER_MENU"
-  entityType String   // e.g. "ContentItem", "Menu", "MenuItem", "User"
+  action     String   // e.g. "LOGIN", "LOGOUT", "CREATE", "EDIT", "DELETE", "PUBLISH", "ARCHIVE"
+  entityType String   // e.g. "ContentItem", "Menu", "MediaAsset", "User"
   entityId   String?
+  status     String   @default("SUCCESS") // "SUCCESS" | "FAILURE"
   metadata   Json?
   ipAddress  String?
+  userAgent  String?
+  browser    String?  // e.g. "Chrome 120", "Firefox 121", "Safari 17"
+  device     String?  // e.g. "Desktop (Windows)", "Mobile (iOS)"
   createdAt  DateTime @default(now())
 
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
