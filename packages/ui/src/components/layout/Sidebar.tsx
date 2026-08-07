@@ -2,35 +2,117 @@ import * as React from 'react';
 import {
   LayoutDashboard,
   FileText,
-  FileSpreadsheet,
-  Users,
-  Building,
-  ShieldAlert,
+  FolderOpen,
+  Menu as MenuIcon,
+  Users as UsersIcon,
   Settings,
+  BarChart3,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Globe,
+  X,
+  Building2,
+  Newspaper,
   Award,
   Layers,
+  FileSpreadsheet,
+  UploadCloud,
+  FolderKanban,
+  Link,
+  ShieldCheck,
   Activity,
-  X,
+  Sparkles,
+  HardDrive,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
-export interface NavItem {
+export interface SubMenuItem {
   title: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
   badge?: string;
-  roles?: string[];
 }
 
-export interface NavGroup {
+export interface MenuItem {
   title: string;
-  items: NavItem[];
+  href?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  children?: SubMenuItem[];
 }
+
+const defaultMenuTree: MenuItem[] = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard,
+    children: [
+      { title: 'Overview', href: '/dashboard' },
+      { title: 'Real-Time Analytics', href: '/dashboard/analytics' },
+    ],
+  },
+  {
+    title: 'Content',
+    icon: FileText,
+    badge: '14',
+    children: [
+      { title: 'All Content Items', href: '/content' },
+      { title: 'Press Releases', href: '/content/press-releases' },
+      { title: 'Public Notices', href: '/content/notices' },
+      { title: 'Executive Orders', href: '/content/executive-orders' },
+      { title: 'Government Pages', href: '/content/pages' },
+    ],
+  },
+  {
+    title: 'Media',
+    icon: FolderOpen,
+    children: [
+      { title: 'Asset Library', href: '/media' },
+      { title: 'Upload Assets', href: '/media/upload' },
+      { title: 'Media Categories', href: '/media/categories' },
+    ],
+  },
+  {
+    title: 'Menus',
+    icon: MenuIcon,
+    children: [
+      { title: 'Primary Navigation', href: '/menus/primary' },
+      { title: 'Footer Links', href: '/menus/footer' },
+      { title: 'Agency Header Bar', href: '/menus/header' },
+    ],
+  },
+  {
+    title: 'Users',
+    icon: UsersIcon,
+    badge: '8',
+    children: [
+      { title: 'Users Directory', href: '/users' },
+      { title: 'Roles & Permissions', href: '/users/roles' },
+      { title: 'Access & Sessions', href: '/users/sessions' },
+    ],
+  },
+  {
+    title: 'Settings',
+    icon: Settings,
+    children: [
+      { title: 'General Info', href: '/settings' },
+      { title: 'Branding Tokens', href: '/settings/branding' },
+      { title: 'Security & API Keys', href: '/settings/security' },
+    ],
+  },
+  {
+    title: 'Reports',
+    icon: BarChart3,
+    children: [
+      { title: 'System Health', href: '/reports/health' },
+      { title: 'Audit Trail', href: '/reports/audit-logs' },
+      { title: 'Usage & Storage', href: '/reports/storage' },
+    ],
+  },
+];
 
 export interface SidebarProps {
   currentPath?: string;
@@ -40,183 +122,276 @@ export interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-const defaultNavGroups: NavGroup[] = [
-  {
-    title: 'Core Platform',
-    items: [
-      { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { title: 'Public Services', href: '/services', icon: Globe, badge: 'Active' },
-    ],
-  },
-  {
-    title: 'Content Management',
-    items: [
-      { title: 'Press Releases', href: '/content/press-releases', icon: FileText },
-      { title: 'Public Notices', href: '/content/notices', icon: FileSpreadsheet },
-      { title: 'Executive Orders', href: '/content/executive-orders', icon: Award },
-      { title: 'Government Pages', href: '/content/pages', icon: Layers },
-    ],
-  },
-  {
-    title: 'Agency Governance',
-    items: [
-      { title: 'Agencies Directory', href: '/governance/agencies', icon: Building },
-      { title: 'Users & Roles', href: '/governance/users', icon: Users },
-      { title: 'Audit Trail', href: '/governance/audit-logs', icon: Activity },
-    ],
-  },
-  {
-    title: 'System Administration',
-    items: [
-      { title: 'Security & Compliance', href: '/admin/security', icon: ShieldAlert },
-      { title: 'System Settings', href: '/admin/settings', icon: Settings },
-    ],
-  },
-];
-
 export const Sidebar: React.FC<SidebarProps> = ({
   currentPath = '/dashboard',
-  isCollapsed = false,
-  onToggleCollapse,
+  isCollapsed: externalIsCollapsed,
+  onToggleCollapse: externalOnToggleCollapse,
   isMobileOpen = false,
   onCloseMobile,
 }) => {
-  const sidebarContent = (
-    <div className="flex h-full flex-col justify-between bg-card border-r transition-all duration-300">
-      {/* Top Branding Section */}
-      <div>
-        <div className="flex h-16 items-center justify-between px-4 border-b">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-black shadow-md">
-              <span className="text-secondary text-lg">G</span>
-            </div>
-            {!isCollapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-extrabold tracking-tight text-foreground">
-                  GovCMS <span className="text-secondary text-xs font-semibold">HQ</span>
-                </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
-                  Enterprise Platform
-                </span>
-              </div>
-            )}
-          </div>
-          {/* Mobile close button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={onCloseMobile}
-            aria-label="Close sidebar"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+  // Local state persistence for collapsed state if external handlers not passed
+  const [internalCollapsed, setInternalCollapsed] = React.useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('govcms_sidebar_collapsed') === 'true';
+  });
 
-        {/* Navigation Sections */}
-        <nav className="space-y-6 px-3 py-4 overflow-y-auto max-h-[calc(100vh-140px)]">
-          {defaultNavGroups.map((group, groupIdx) => (
-            <div key={groupIdx} className="space-y-1">
-              {!isCollapsed && (
-                <h4 className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
-                  {group.title}
-                </h4>
-              )}
-              <ul className="space-y-1">
-                {group.items.map((item, itemIdx) => {
-                  const Icon = item.icon;
-                  const isActive = currentPath === item.href;
-                  return (
-                    <li key={itemIdx}>
-                      <a
-                        href={item.href}
+  const isCollapsed = externalIsCollapsed ?? internalCollapsed;
+
+  const handleToggle = () => {
+    const nextState = !isCollapsed;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('govcms_sidebar_collapsed', String(nextState));
+    }
+    if (externalOnToggleCollapse) {
+      externalOnToggleCollapse();
+    } else {
+      setInternalCollapsed(nextState);
+    }
+  };
+
+  // Open state for accordion menus
+  const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({
+    Dashboard: true,
+    Content: true,
+  });
+
+  const toggleSubMenu = (title: string) => {
+    setOpenMenus((prev) => ({ ...prev, [title]: !prev[title] }));
+  };
+
+  const renderNavItems = (inDrawer = false) => (
+    <TooltipProvider delayDuration={100}>
+      <div className="space-y-1 px-2.5 py-3">
+        {defaultMenuTree.map((item) => {
+          const Icon = item.icon;
+          const hasChildren = item.children && item.children.length > 0;
+          const isOpen = !!openMenus[item.title];
+
+          const isChildActive =
+            hasChildren && item.children?.some((child) => child.href === currentPath);
+          const isMainActive = item.href === currentPath || isChildActive;
+
+          // Collapsed Mode Item View
+          if (isCollapsed && !inDrawer) {
+            return (
+              <Tooltip key={item.title}>
+                <TooltipTrigger asChild>
+                  <a
+                    href={item.href || item.children?.[0]?.href || '#'}
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-lg transition-all mx-auto relative group',
+                      isMainActive
+                        ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.badge && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-secondary text-secondary-foreground text-[9px] font-bold px-1 ring-2 ring-background">
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={10} className="space-y-1">
+                  <p className="font-bold">{item.title}</p>
+                  {hasChildren && (
+                    <div className="pt-1 border-t border-border/50 text-[11px] space-y-0.5 font-normal">
+                      {item.children?.map((child) => (
+                        <p key={child.title} className="text-muted-foreground hover:text-foreground">
+                          • {child.title}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          // Expanded / Drawer Item View
+          if (hasChildren) {
+            return (
+              <Collapsible key={item.title} open={isOpen} onOpenChange={() => toggleSubMenu(item.title)}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-semibold transition-all group',
+                      isMainActive
+                        ? 'text-primary bg-primary/10 font-bold'
+                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className={cn('h-4 w-4 shrink-0', isMainActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground')} />
+                      <span>{item.title}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {item.badge && (
+                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-bold">
+                          {item.badge}
+                        </Badge>
+                      )}
+                      <ChevronDown
                         className={cn(
-                          'flex items-center gap-3 rounded-md px-3 py-2 text-xs font-medium transition-all group relative',
-                          isActive
-                            ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                          isCollapsed && 'justify-center px-2',
+                          'h-3.5 w-3.5 text-muted-foreground/70 transition-transform duration-200',
+                          isOpen && 'rotate-180',
                         )}
-                        title={isCollapsed ? item.title : undefined}
+                      />
+                    </div>
+                  </button>
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="pl-6 pt-1 space-y-1">
+                  {item.children?.map((child) => {
+                    const isSubActive = currentPath === child.href;
+                    return (
+                      <a
+                        key={child.title}
+                        href={child.href}
+                        className={cn(
+                          'flex items-center justify-between rounded-md px-3 py-1.5 text-[11px] font-medium transition-all relative border-l pl-3',
+                          isSubActive
+                            ? 'text-primary font-bold border-primary bg-primary/5'
+                            : 'text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground',
+                        )}
                       >
-                        <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-secondary' : 'text-muted-foreground group-hover:text-foreground')} />
-                        {!isCollapsed && (
-                          <span className="flex-1 truncate">{item.title}</span>
-                        )}
-                        {!isCollapsed && item.badge && (
-                          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-bold">
-                            {item.badge}
+                        <span className="truncate">{child.title}</span>
+                        {child.badge && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">
+                            {child.badge}
                           </Badge>
                         )}
                       </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-      </div>
+                    );
+                  })}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          }
 
-      {/* Sidebar Footer & Collapse Toggle */}
-      <div className="border-t p-3 space-y-3 bg-muted/20">
-        {!isCollapsed && (
-          <div className="rounded-md border bg-background p-2.5 shadow-2xs text-[11px]">
-            <div className="flex items-center justify-between text-muted-foreground font-medium">
-              <span>Security Status</span>
-              <span className="text-emerald-600 font-bold">ISO 27001</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Government Standard Encryption Enabled
-            </p>
+          // Single Item View
+          return (
+            <a
+              key={item.title}
+              href={item.href || '#'}
+              className={cn(
+                'flex items-center justify-between rounded-md px-3 py-2 text-xs font-semibold transition-all group',
+                isMainActive
+                  ? 'bg-primary text-primary-foreground font-bold shadow-sm'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon className={cn('h-4 w-4 shrink-0', isMainActive ? 'text-secondary' : 'text-muted-foreground group-hover:text-foreground')} />
+                <span>{item.title}</span>
+              </div>
+              {item.badge && (
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-bold">
+                  {item.badge}
+                </Badge>
+              )}
+            </a>
+          );
+        })}
+      </div>
+    </TooltipProvider>
+  );
+
+  const sidebarHeader = (
+    <div className="flex h-16 items-center justify-between px-3 border-b bg-card">
+      <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-black shadow-sm">
+          <Building2 className="h-5 w-5 text-secondary" />
+        </div>
+        {(!isCollapsed || isMobileOpen) && (
+          <div className="flex flex-col truncate">
+            <span className="text-sm font-black tracking-tight text-foreground flex items-center gap-1.5">
+              GovCMS <Badge variant="outline" className="text-[9px] py-0 h-3.5 font-mono">v1.0</Badge>
+            </span>
+            <span className="text-[10px] text-muted-foreground font-mono truncate">
+              DICT Portal Engine
+            </span>
           </div>
         )}
+      </div>
 
-        <div className="flex items-center justify-between">
-          {!isCollapsed && (
-            <span className="text-[10px] text-muted-foreground font-mono">
-              GovCMS v1.0.0
+      {isMobileOpen && (
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onCloseMobile}>
+          <X className="h-5 w-5" />
+        </Button>
+      )}
+    </div>
+  );
+
+  const sidebarFooter = (
+    <div className="border-t p-3 space-y-2 bg-muted/20">
+      {(!isCollapsed || isMobileOpen) && (
+        <div className="rounded-md border bg-card p-2.5 text-[11px] shadow-2xs space-y-1">
+          <div className="flex items-center justify-between text-muted-foreground font-semibold">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Security ISO
             </span>
-          )}
-          {onToggleCollapse && (
-            <Button
-              variant="outline"
-              size="icon"
-              className={cn('h-7 w-7 hidden lg:flex', isCollapsed && 'mx-auto')}
-              onClick={onToggleCollapse}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-            </Button>
-          )}
+            <span className="text-emerald-600 font-bold font-mono">27001</span>
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Encrypted Agency Operations
+          </p>
         </div>
+      )}
+
+      <div className="flex items-center justify-between pt-1">
+        {(!isCollapsed || isMobileOpen) && (
+          <span className="text-[10px] text-muted-foreground font-mono">
+            Press <kbd className="px-1 py-0.5 rounded border bg-muted font-sans text-[9px]">Ctrl+B</kbd>
+          </span>
+        )}
+        <Button
+          variant="outline"
+          size="icon"
+          className={cn('h-7 w-7 hidden lg:flex', isCollapsed && 'mx-auto')}
+          onClick={handleToggle}
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+        </Button>
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Desktop Permanent Sidebar */}
+      {/* Desktop Permanent Collapsible Sidebar */}
       <aside
         className={cn(
-          'hidden lg:block h-screen sticky top-0 z-20 shrink-0 border-r transition-all duration-300',
+          'hidden lg:flex h-screen sticky top-0 z-20 shrink-0 flex-col justify-between border-r bg-card transition-all duration-300',
           isCollapsed ? 'w-16' : 'w-64',
         )}
       >
-        {sidebarContent}
+        <div>
+          {sidebarHeader}
+          <div className="overflow-y-auto max-h-[calc(100vh-140px)]">
+            {renderNavItems(false)}
+          </div>
+        </div>
+        {sidebarFooter}
       </aside>
 
-      {/* Mobile Drawer Sidebar */}
+      {/* Mobile Responsive Sheet Drawer */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop */}
           <div
             className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity"
             onClick={onCloseMobile}
           />
-          {/* Drawer content */}
-          <div className="relative flex w-72 max-w-[80vw] flex-col z-10 shadow-2xl">
-            {sidebarContent}
+          <div className="relative flex w-72 max-w-[85vw] flex-col justify-between z-10 bg-card border-r shadow-2xl">
+            <div>
+              {sidebarHeader}
+              <div className="overflow-y-auto max-h-[calc(100vh-140px)]">
+                {renderNavItems(true)}
+              </div>
+            </div>
+            {sidebarFooter}
           </div>
         </div>
       )}

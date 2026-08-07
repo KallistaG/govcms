@@ -10,6 +10,8 @@ export * from './components/ui/checkbox';
 export * from './components/ui/alert';
 export * from './components/ui/progress';
 export * from './components/ui/table';
+export * from './components/ui/tooltip';
+export * from './components/ui/collapsible';
 
 export * from './components/layout/Header';
 export * from './components/layout/Sidebar';
