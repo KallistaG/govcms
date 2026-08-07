@@ -326,13 +326,13 @@ model ThemeConfig {
 
 model SiteSettings {
   id                 String   @id @default(uuid())
-  websiteName        String   @default("Department of Information and Communications Technology")
-  description        String?  @default("Official government portal for public services, press releases, executive orders, and agency updates.")
-  keywords           String?  @default("govcms, philippines, dict, government, public services")
-  email              String?  @default("info@dict.gov.ph")
-  phone              String?  @default("+63 (02) 8920-0101")
-  address            String?  @default("DICT Building, C.P. Garcia Ave., Diliman, Quezon City, 1101 Philippines")
-  googleMapsUrl      String?  @default("https://maps.google.com/maps?q=DICT+Quezon+City&t=&z=15&ie=UTF8&iwloc=&output=embed")
+  websiteName        String   @default("La Carlota City Water District")
+  description        String?  @default("Providing safe, adequate, safe and potable water supply affordable to all.")
+  keywords           String?  @default("govcms, philippines, dict, government, public services, water district")
+  email              String?  @default("info@lacarlotawater.gov.ph")
+  phone              String?  @default("+63 (034) 460-2234")
+  address            String?  @default("Gurrea St., La Carlota City, Negros Occidental, Philippines")
+  googleMapsUrl      String?  @default("https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed")
   socialLinks        Json?    // {facebook, twitter, youtube, instagram, linkedin}
   analyticsId        String?  @default("G-GOVCMS2026")
   smtpHost           String?  @default("smtp.gov.ph")
@@ -349,4 +349,30 @@ model SiteSettings {
   agency             Agency   @relation(fields: [agencyId], references: [id])
 
   @@map("site_settings")
+}
+
+model WebsiteSettings {
+  id                 String   @id @default(uuid())
+  siteName           String   @default("La Carlota City Water District")
+  tagline            String?  @default("Providing safe, adequate, safe and potable water supply affordable to all.")
+  seoTitle           String?  @default("La Carlota City Water District | Official Portal")
+  seoDescription     String?  @default("Providing safe, adequate, safe and potable water supply affordable to all.")
+  keywords           String?  @default("govcms, philippines, dict, government, public services, water district")
+  logo               String?
+  favicon            String?
+  primaryColor       String   @default("#1d4ed8")
+  secondaryColor     String   @default("#7c3aed")
+  email              String?  @default("info@lacarlotawater.gov.ph")
+  phone              String?  @default("+63 (034) 460-2234")
+  address            String?  @default("Gurrea St., La Carlota City, Negros Occidental, Philippines")
+  googleMaps         String?  @default("https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed")
+  facebook           String?  @default("https://facebook.com/LaCarlotaCityWaterDistrict")
+  twitter            String?
+  youtube            String?
+  maintenanceMode    Boolean  @default(false)
+  maintenanceMessage String?  @default("The official agency portal is currently undergoing scheduled system maintenance. Please check back shortly.")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("website_settings")
 }

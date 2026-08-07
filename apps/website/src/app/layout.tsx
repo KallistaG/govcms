@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import './globals.css';
+import { getWebsiteSettings, getPublicThemeFromDb, getPublicMenuFromDb } from './get-dynamic-data';
 import {
   Globe,
   ExternalLink,
@@ -11,16 +12,17 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0; // Guaranteed 0 cache - always fresh PostgreSQL data
 
-export const revalidate = 60; // ISR revalidation every 60 seconds
-
-export const metadata: Metadata = {
-  title: 'Department of Information and Communications Technology | Official Portal',
-  description:
-    'Official government portal for public services, press releases, executive orders, public notices, and ICT projects.',
-  keywords: 'govcms, philippines, dict, government, public services, press release',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getWebsiteSettings();
+  return {
+    title: settings.seoTitle || `${settings.siteName} | Official Portal`,
+    description: settings.seoDescription || settings.tagline || '',
+    keywords: settings.keywords || '',
+  };
+}
 
 function hexToHsl(hex: string): string {
   if (!hex || !hex.startsWith('#')) return '217 91% 32%';
@@ -58,56 +60,12 @@ function hexToHsl(hex: string): string {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 }
 
-async function getSiteConfig() {
-  try {
-    const res = await fetch(`${API_URL}/site-settings/public`, { next: { revalidate: 60 } });
-    if (res.ok) return await res.json();
-  } catch {
-    // fallback
-  }
-  return {
-    websiteName: 'La Carlota City Water District',
-    description: 'Providing safe, adequate, safe and potable water supply affordable to all.',
-    email: 'info@lacarlotawater.gov.ph',
-    phone: '+63 (034) 460-2234',
-    address: 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
-    socialLinks: { facebook: 'https://facebook.com/LaCarlotaCityWaterDistrict' },
-    analyticsId: 'G-GOVCMS2026',
-    maintenanceMode: false,
-    maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance.',
-  };
-}
-
-async function getPublicTheme() {
-  try {
-    const res = await fetch(`${API_URL}/theme/public`, { next: { revalidate: 60 } });
-    if (res.ok) return await res.json();
-  } catch {
-    // fallback
-  }
-  return {
-    websiteName: 'La Carlota City Water District',
-    primaryColor: '#1d4ed8',
-    secondaryColor: '#7c3aed',
-  };
-}
-
-async function getPublicMenu(location: string) {
-  try {
-    const res = await fetch(`${API_URL}/menus/public/${location}`, { next: { revalidate: 60 } });
-    if (res.ok) return await res.json();
-  } catch {
-    // fallback
-  }
-  return { items: [] };
-}
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [settings, theme, headerMenu, footerMenu] = await Promise.all([
-    getSiteConfig(),
-    getPublicTheme(),
-    getPublicMenu('HEADER'),
-    getPublicMenu('FOOTER'),
+    getWebsiteSettings(),
+    getPublicThemeFromDb(),
+    getPublicMenuFromDb('HEADER'),
+    getPublicMenuFromDb('FOOTER'),
   ]);
 
   const primaryHsl = hexToHsl(theme.primaryColor || '#1d4ed8');
@@ -124,21 +82,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           `,
           }}
         />
-        {settings.analyticsId && (
-          <script
-            async
-            src={`https://www.googletagmanager.com/gtag/js?id=${settings.analyticsId}`}
-          />
-        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'GovernmentOrganization',
-              name: settings.websiteName || 'Department of Information and Communications Technology',
-              url: 'https://dict.gov.ph',
-              description: settings.description,
+              name: settings.siteName,
+              description: settings.tagline || settings.seoDescription,
               email: settings.email,
               telephone: settings.phone,
               address: {
@@ -183,12 +134,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b shadow-2xs">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform">
-                <Globe className="h-5 w-5" />
-              </div>
+              {settings.logo ? (
+                <img src={settings.logo} alt={settings.siteName} className="h-10 w-auto object-contain" />
+              ) : (
+                <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform">
+                  <Globe className="h-5 w-5" />
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
-                  {settings.websiteName || theme.websiteName || 'GovCMS Agency Portal'}
+                  {settings.siteName}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-semibold">
                   GOV.PH Official Web Platform
@@ -257,10 +212,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-white font-bold text-sm">
                   <Globe className="h-5 w-5 text-primary" />
-                  <span>{settings.websiteName}</span>
+                  <span>{settings.siteName}</span>
                 </div>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  {settings.description}
+                  {settings.tagline || settings.seoDescription}
                 </p>
               </div>
 
@@ -285,9 +240,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <div>
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Agency Contact</h4>
                 <ul className="space-y-2 text-xs text-slate-400 font-mono">
-                  <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-primary" /> {settings.email}</li>
-                  <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-primary" /> {settings.phone}</li>
-                  <li className="flex items-start gap-2"><MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> <span className="font-sans text-[11px]">{settings.address}</span></li>
+                  {settings.email && <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-primary" /> {settings.email}</li>}
+                  {settings.phone && <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-primary" /> {settings.phone}</li>}
+                  {settings.address && <li className="flex items-start gap-2"><MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> <span className="font-sans text-[11px]">{settings.address}</span></li>}
                 </ul>
               </div>
 
@@ -295,7 +250,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">GOV.PH Links</h4>
                 <ul className="space-y-2 text-xs text-slate-400">
                   <li><a href="https://www.gov.ph" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">Official Gazette <ExternalLink className="h-3 w-3" /></a></li>
-                  <li><a href="https://dict.gov.ph" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">DICT Central Portal <ExternalLink className="h-3 w-3" /></a></li>
+                  {settings.facebook && <li><a href={settings.facebook} target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">Official Facebook Page <ExternalLink className="h-3 w-3" /></a></li>}
                 </ul>
               </div>
             </div>
