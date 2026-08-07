@@ -4,6 +4,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL || 'https://govcms-website.vercel.app';
+
+async function syncToWebsite(location: string, items: any[]) {
+  try {
+    await fetch(`${WEBSITE_URL}/api/v1/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'menus', data: { location, items } }),
+    });
+  } catch {
+    // ignore
+  }
+}
 
 export interface MenuItemData {
   id: string;
@@ -245,9 +258,11 @@ export function useCreateMenuItem() {
         addToParent(memoryMenuData[loc]);
       }
 
+      syncToWebsite(newItem.location, memoryMenuData[newItem.location as keyof typeof memoryMenuData] || []);
       return createdItem;
     },
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
+      syncToWebsite(vars.location, memoryMenuData[vars.location as keyof typeof memoryMenuData] || []);
       queryClient.invalidateQueries({ queryKey: ['menu-details'] });
       queryClient.invalidateQueries({ queryKey: ['public-menu'] });
     },

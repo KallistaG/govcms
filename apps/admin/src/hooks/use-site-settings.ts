@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL || 'https://govcms-website.vercel.app';
 const STORAGE_KEY = 'govcms_site_settings';
 
 export interface SiteSettingsData {
@@ -33,19 +34,15 @@ export interface SiteSettingsData {
 }
 
 const DEFAULT_SETTINGS: SiteSettingsData = {
-  websiteName: 'Department of Information and Communications Technology',
-  description: 'Official government portal for public services, press releases, executive orders, and agency updates.',
-  keywords: 'govcms, philippines, dict, government, public services',
-  email: 'info@dict.gov.ph',
-  phone: '+63 (02) 8920-0101',
-  address: 'DICT Building, C.P. Garcia Ave., Diliman, Quezon City, 1101 Philippines',
-  googleMapsUrl: 'https://maps.google.com/maps?q=DICT+Quezon+City&t=&z=15&ie=UTF8&iwloc=&output=embed',
+  websiteName: 'La Carlota City Water District',
+  description: 'Providing safe, adequate, safe and potable water supply affordable to all.',
+  keywords: 'govcms, philippines, dict, government, public services, water district',
+  email: 'info@lacarlotawater.gov.ph',
+  phone: '+63 (034) 460-2234',
+  address: 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
+  googleMapsUrl: 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed',
   socialLinks: {
-    facebook: 'https://facebook.com/DICTgovph',
-    twitter: 'https://twitter.com/DICTgovph',
-    youtube: 'https://youtube.com/DICTgovph',
-    instagram: 'https://instagram.com/DICTgovph',
-    linkedin: 'https://linkedin.com/company/dictgovph',
+    facebook: 'https://facebook.com/LaCarlotaCityWaterDistrict',
   },
   analyticsId: 'G-GOVCMS2026',
   smtpHost: 'smtp.gov.ph',
@@ -82,6 +79,18 @@ function saveLocalSettings(data: Partial<SiteSettingsData>): SiteSettingsData {
   return next;
 }
 
+async function syncToWebsite(type: string, data: any) {
+  try {
+    await fetch(`${WEBSITE_URL}/api/v1/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
 export function useSiteSettings() {
   return useQuery({
     queryKey: ['site-settings'],
@@ -110,6 +119,8 @@ export function useUpdateSiteSettings() {
   return useMutation({
     mutationFn: async (data: Partial<SiteSettingsData>) => {
       const updatedLocal = saveLocalSettings(data);
+      syncToWebsite('site-settings', data);
+
       try {
         const res = await fetch(`${API_URL}/site-settings`, {
           method: 'POST',

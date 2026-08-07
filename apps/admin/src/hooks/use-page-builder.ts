@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL || 'https://govcms-website.vercel.app';
 const HOMEPAGE_STORAGE_KEY = 'govcms_homepage_sections';
 const PAGE_BLOCKS_STORAGE_PREFIX = 'govcms_page_blocks_';
 
@@ -66,22 +67,18 @@ export const BLOCK_TYPE_META: Record<BlockType, { label: string; description: st
 // ─── Default In-Memory Fallbacks ──────────────────────────────────────────────
 
 const DEFAULT_SECTIONS: HomepageSection[] = [
-  { id: 'sec-1', type: 'hero', title: 'Agency Hero Banner', order: 0, isVisible: true, config: { headline: 'Department of Information and Communications Technology', subtext: 'Empowering Filipinos through innovative ICT solutions', ctaLabel: 'Learn More', ctaUrl: '/about' } },
-  { id: 'sec-2', type: 'news', title: 'Latest Press Releases', order: 1, isVisible: true, config: { count: 6 } },
-  { id: 'sec-3', type: 'cards', title: 'Government Services', order: 2, isVisible: true, config: { columns: 3 } },
-  { id: 'sec-4', type: 'statistics', title: 'Agency Performance', order: 3, isVisible: true, config: { items: [{ label: 'Citizens Served', value: '2.4M' }, { label: 'Projects', value: '128' }, { label: 'Offices', value: '84' }] } },
+  { id: 'sec-1', type: 'hero', title: 'Water District Hero Banner', order: 0, isVisible: true, config: { headline: 'La Carlota City Water District', subtext: 'Providing safe, adequate, safe and potable water supply affordable to all.', ctaLabel: 'View Services', ctaUrl: '/news' } },
+  { id: 'sec-2', type: 'news', title: 'Latest Advisories & News', order: 1, isVisible: true, config: { count: 6 } },
+  { id: 'sec-3', type: 'cards', title: 'Water District Services', order: 2, isVisible: true, config: { columns: 3 } },
+  { id: 'sec-4', type: 'statistics', title: 'District Performance', order: 3, isVisible: true, config: { items: [{ label: 'Connections', value: '15.4K' }, { label: 'Potability', value: '100%' }, { label: 'Hotlines', value: '24/7' }] } },
   { id: 'sec-5', type: 'contact', title: 'Contact Our Office', order: 4, isVisible: true, config: {} },
   { id: 'sec-6', type: 'footer', title: 'Footer', order: 5, isVisible: true, config: {} },
 ];
 
 const DEFAULT_BLOCKS: PageBlock[] = [
-  { id: 'blk-1', type: 'hero', order: 0, collapsed: false, config: { headline: 'About Our Agency', subtext: 'Learn about our mandate, mission and vision' } },
+  { id: 'blk-1', type: 'hero', order: 0, collapsed: false, config: { headline: 'About La Carlota City Water District', subtext: 'Learn about our mandate, mission and vision' } },
   { id: 'blk-2', type: 'heading', order: 1, collapsed: false, config: { level: 2, text: 'Our Mission and Vision' } },
-  { id: 'blk-3', type: 'paragraph', order: 2, collapsed: false, config: { text: 'To empower every Filipino through innovative, accessible, and transformative information and communications technology services.' } },
-  { id: 'blk-4', type: 'image', order: 3, collapsed: false, config: { src: '/placeholder-office.jpg', alt: 'Agency headquarters', caption: 'DICT Main Office, Quezon City' } },
-  { id: 'blk-5', type: 'accordion', order: 4, collapsed: false, config: { items: [{ title: 'What services do you offer?', content: 'We offer a range of ICT-related services including digital literacy programs, connectivity projects, and cybersecurity initiatives.' }, { title: 'How can I contact your office?', content: 'You may reach us through our official email or visit any of our regional offices.' }] } },
-  { id: 'blk-6', type: 'table', order: 5, collapsed: false, config: { headers: ['Region', 'Office', 'Contact'], rows: [['NCR', 'Main Office', '(02) 1234-5678'], ['Region IV', 'Calabarzon Branch', '(049) 876-5432']] } },
-  { id: 'blk-7', type: 'button', order: 6, collapsed: false, config: { label: 'Download Annual Report', url: '/downloads/annual-report-2025.pdf', variant: 'primary' } },
+  { id: 'blk-3', type: 'paragraph', order: 2, collapsed: false, config: { text: 'Providing safe, adequate, safe and potable water supply affordable to all.' } },
 ];
 
 function getLocalHomepage(): HomepageSection[] {
@@ -128,6 +125,18 @@ function saveLocalPageBlocks(slug: string, blocks: PageBlock[]): PageBlock[] {
   return blocks;
 }
 
+async function syncToWebsite(type: string, data: any) {
+  try {
+    await fetch(`${WEBSITE_URL}/api/v1/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
 // ─── Homepage Section Hooks ───────────────────────────────────────────────────
 
 export function useHomepageSections() {
@@ -156,6 +165,8 @@ export function useSaveHomepageSections() {
   return useMutation({
     mutationFn: async (sections: HomepageSection[]) => {
       saveLocalHomepage(sections);
+      syncToWebsite('homepage', { sections });
+
       try {
         const res = await fetch(`${API_URL}/page-builder/homepage/sections`, {
           method: 'POST',
@@ -231,6 +242,8 @@ export function useSavePageBlocks() {
   return useMutation({
     mutationFn: async ({ slug, title, blocks }: { slug: string; title: string; blocks: PageBlock[] }) => {
       saveLocalPageBlocks(slug, blocks);
+      syncToWebsite('pages', { slug, page: { title, slug, blocks } });
+
       try {
         const res = await fetch(`${API_URL}/page-builder/pages/${slug}`, {
           method: 'POST',

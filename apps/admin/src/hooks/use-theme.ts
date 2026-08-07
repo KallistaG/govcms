@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const WEBSITE_URL = process.env.NEXT_PUBLIC_WEBSITE_URL || 'https://govcms-website.vercel.app';
 const STORAGE_KEY = 'govcms_theme_config';
 
 export interface ThemeConfig {
@@ -36,7 +37,7 @@ export interface ThemeConfig {
 }
 
 const DEFAULT_THEME: ThemeConfig = {
-  websiteName: 'GovCMS Agency Portal',
+  websiteName: 'La Carlota City Water District',
   logoUrl: null,
   faviconUrl: null,
   primaryColor: '#1d4ed8',
@@ -53,7 +54,7 @@ const DEFAULT_THEME: ThemeConfig = {
     bgColor: '#0f172a',
     textColor: '#94a3b8',
     showSocials: true,
-    copyright: '© 2026 Government Agency. All rights reserved.',
+    copyright: '© 2026 La Carlota City Water District. All rights reserved.',
   },
   buttonStyle: {
     borderRadius: '8px',
@@ -88,6 +89,18 @@ function saveLocalTheme(theme: Partial<ThemeConfig>): ThemeConfig {
   return next;
 }
 
+async function syncToWebsite(type: string, data: any) {
+  try {
+    await fetch(`${WEBSITE_URL}/api/v1/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data }),
+    });
+  } catch {
+    // ignore
+  }
+}
+
 export function useThemeConfig() {
   return useQuery({
     queryKey: ['theme-config'],
@@ -114,6 +127,8 @@ export function useSaveTheme() {
   return useMutation({
     mutationFn: async (theme: Partial<ThemeConfig>) => {
       const updatedLocal = saveLocalTheme(theme);
+      syncToWebsite('theme', theme);
+
       try {
         const res = await fetch(`${API_URL}/theme`, {
           method: 'POST',
