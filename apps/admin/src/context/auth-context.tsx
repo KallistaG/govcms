@@ -68,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       handleSilentRefresh();
     }, refreshDelayMs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSilentRefresh = React.useCallback(async (): Promise<boolean> => {
