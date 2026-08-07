@@ -71,10 +71,10 @@ export default async function PublicHomePage() {
                       <Sparkles className="h-3.5 w-3.5" /> Republic of the Philippines Official Portal
                     </div>
                     <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
-                      {sec.config?.headline || sec.title || 'Department of Information and Communications Technology'}
+                      {sec.config?.headline || sec.title || 'La Carlota City Water District'}
                     </h1>
                     <p className="text-base text-slate-200 leading-relaxed font-normal">
-                      {sec.config?.subtext || 'Empowering Filipinos through innovative ICT solutions and accessible public digital services.'}
+                      {sec.config?.subtext || 'Providing safe, adequate, safe and potable water supply affordable to all.'}
                     </p>
                     <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
                       <Link href={sec.config?.ctaUrl || '/news'} className="px-6 py-3 rounded-xl bg-white text-slate-950 font-black text-xs hover:bg-slate-100 transition-all shadow-lg flex items-center gap-2">
@@ -210,10 +210,10 @@ export default async function PublicHomePage() {
                   <Sparkles className="h-3.5 w-3.5" /> Republic of the Philippines Official Portal
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
-                  Empowering Every Filipino Through Digital Innovation & Connectivity
+                  La Carlota City Water District
                 </h1>
                 <p className="text-base text-slate-200 leading-relaxed font-normal">
-                  Access official press releases, government digital services, executive orders, cybersecurity advisories, and public notices.
+                  Providing safe, adequate, safe and potable water supply affordable to all.
                 </p>
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
                   <Link href="/news" className="px-6 py-3 rounded-xl bg-white text-slate-950 font-black text-xs hover:bg-slate-100 transition-all shadow-lg flex items-center gap-2">

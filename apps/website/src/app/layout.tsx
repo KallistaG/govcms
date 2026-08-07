@@ -66,12 +66,12 @@ async function getSiteConfig() {
     // fallback
   }
   return {
-    websiteName: 'Department of Information and Communications Technology',
-    description: 'Official government portal for public services, press releases, and agency updates.',
-    email: 'info@dict.gov.ph',
-    phone: '+63 (02) 8920-0101',
-    address: 'DICT Building, C.P. Garcia Ave., Diliman, Quezon City, 1101 Philippines',
-    socialLinks: { facebook: 'https://facebook.com/DICTgovph', twitter: 'https://twitter.com/DICTgovph' },
+    websiteName: 'La Carlota City Water District',
+    description: 'Providing safe, adequate, safe and potable water supply affordable to all.',
+    email: 'info@lacarlotawater.gov.ph',
+    phone: '+63 (034) 460-2234',
+    address: 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
+    socialLinks: { facebook: 'https://facebook.com/LaCarlotaCityWaterDistrict' },
     analyticsId: 'G-GOVCMS2026',
     maintenanceMode: false,
     maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance.',
@@ -86,7 +86,7 @@ async function getPublicTheme() {
     // fallback
   }
   return {
-    websiteName: 'Department of Information and Communications Technology',
+    websiteName: 'La Carlota City Water District',
     primaryColor: '#1d4ed8',
     secondaryColor: '#7c3aed',
   };
