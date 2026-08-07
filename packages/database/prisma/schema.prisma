@@ -32,6 +32,12 @@ enum ContentTypeEnum {
   EVENT
 }
 
+enum MenuLocationEnum {
+  HEADER_MENU
+  FOOTER_MENU
+  SIDEBAR_MENU
+}
+
 model Agency {
   id           String        @id @default(uuid())
   name         String
@@ -46,6 +52,7 @@ model Agency {
   contentItems ContentItem[]
   mediaFolders MediaFolder[]
   mediaAssets  MediaAsset[]
+  menus        Menu[]
 
   @@map("agencies")
 }
@@ -72,6 +79,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   createdFolders      MediaFolder[]        @relation("FolderCreator")
   uploadedAssets      MediaAsset[]         @relation("AssetUploader")
+  createdMenus        Menu[]               @relation("MenuCreator")
 
   @@map("users")
 }
@@ -174,11 +182,49 @@ model MediaAsset {
   @@map("media_assets")
 }
 
+model Menu {
+  id          String           @id @default(uuid())
+  name        String
+  code        String           @unique
+  location    MenuLocationEnum @default(HEADER_MENU)
+  agencyId    String
+  createdById String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  agency      Agency           @relation(fields: [agencyId], references: [id])
+  createdBy   User             @relation("MenuCreator", fields: [createdById], references: [id])
+  items       MenuItem[]
+
+  @@map("menus")
+}
+
+model MenuItem {
+  id           String     @id @default(uuid())
+  menuId       String
+  parentId     String?
+  title        String
+  url          String
+  icon         String?
+  isExternal   Boolean    @default(false)
+  openInNewTab Boolean    @default(false)
+  isVisible    Boolean    @default(true)
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  menu         Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent       MenuItem?  @relation("MenuItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children     MenuItem[] @relation("MenuItemHierarchy")
+
+  @@map("menu_items")
+}
+
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
-  action     String   // e.g. "LOGIN", "CREATE_CONTENT", "UPLOAD_MEDIA", "DELETE_MEDIA"
-  entityType String   // e.g. "ContentItem", "MediaAsset", "User"
+  action     String   // e.g. "LOGIN", "CREATE_CONTENT", "CREATE_MENU", "REORDER_MENU"
+  entityType String   // e.g. "ContentItem", "Menu", "MenuItem", "User"
   entityId   String?
   metadata   Json?
   ipAddress  String?
