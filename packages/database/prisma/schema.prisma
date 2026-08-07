@@ -1,0 +1,118 @@
+// GovCMS Database Schema Definition
+// PostgreSQL Database Provider with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleEnum {
+  SUPER_ADMIN
+  AGENCY_ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum ContentStatusEnum {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentTypeEnum {
+  PRESS_RELEASE
+  PUBLIC_NOTICE
+  GOVERNMENT_SERVICE
+  EXECUTIVE_ORDER
+  PAGE_DOCUMENT
+}
+
+model Agency {
+  id           String        @id @default(uuid())
+  name         String
+  code         String        @unique // e.g. "DOH", "DICT", "DOT"
+  slug         String        @unique
+  logoUrl      String?
+  contactEmail String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  users        User[]
+  contentItems ContentItem[]
+
+  @@map("agencies")
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         RoleEnum   @default(EDITOR)
+  isActive     Boolean    @default(true)
+  lastLoginAt  DateTime?
+  agencyId     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  agency       Agency?       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  contents     ContentItem[] @relation("UserContentAuthor")
+  auditLogs    AuditLog[]
+  sessions     Session[]
+
+  @@map("users")
+}
+
+model ContentItem {
+  id          String            @id @default(uuid())
+  title       String
+  slug        String            @unique
+  summary     String?
+  body        String
+  type        ContentTypeEnum   @default(PRESS_RELEASE)
+  status      ContentStatusEnum @default(DRAFT)
+  publishedAt DateTime?
+  authorId    String
+  agencyId    String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  author      User              @relation("UserContentAuthor", fields: [authorId], references: [id])
+  agency      Agency            @relation(fields: [agencyId], references: [id])
+
+  @@map("content_items")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String   // e.g. "LOGIN", "CREATE_ARTICLE", "PUBLISH_DOCUMENT"
+  entityType String   // e.g. "ContentItem", "User"
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}

@@ -1,0 +1,31 @@
+{
+  "name": "govcms-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GovCMS - Modern Government Content Management System Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "npm run db:generate --workspace=@govcms/database",
+    "db:push": "npm run db:push --workspace=@govcms/database",
+    "db:studio": "npm run db:studio --workspace=@govcms/database",
+    "db:seed": "npm run db:seed --workspace=@govcms/database"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.16.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

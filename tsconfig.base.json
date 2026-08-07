@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "composite": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@govcms/ui": ["./packages/ui/src/index.ts"],
+      "@govcms/ui/*": ["./packages/ui/src/*"],
+      "@govcms/database": ["./packages/database/src/index.ts"],
+      "@govcms/database/*": ["./packages/database/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".next"]
+}
