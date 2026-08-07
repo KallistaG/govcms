@@ -145,6 +145,9 @@ model ContentItem {
   author        User              @relation("UserContentAuthor", fields: [authorId], references: [id])
   agency        Agency            @relation(fields: [agencyId], references: [id])
 
+  @@index([agencyId, isDeleted, status])
+  @@index([type, slug])
+  @@index([createdAt])
   @@map("content_items")
 }
 
@@ -190,6 +193,9 @@ model MediaAsset {
   agency       Agency       @relation(fields: [agencyId], references: [id])
   uploadedBy   User         @relation("AssetUploader", fields: [uploadedById], references: [id])
 
+  @@index([agencyId, folderId])
+  @@index([mimeType])
+  @@index([createdAt])
   @@map("media_assets")
 }
 
@@ -207,6 +213,7 @@ model Menu {
   createdBy   User             @relation("MenuCreator", fields: [createdById], references: [id])
   items       MenuItem[]
 
+  @@index([agencyId, location])
   @@map("menus")
 }
 
@@ -228,6 +235,7 @@ model MenuItem {
   parent       MenuItem?  @relation("MenuItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children     MenuItem[] @relation("MenuItemHierarchy")
 
+  @@index([menuId, isVisible, order])
   @@map("menu_items")
 }
 
@@ -247,6 +255,9 @@ model AuditLog {
 
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  @@index([action, entityType])
+  @@index([userId])
+  @@index([createdAt])
   @@map("audit_logs")
 }
 

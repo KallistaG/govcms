@@ -12,6 +12,9 @@ export * from './components/ui/progress';
 export * from './components/ui/table';
 export * from './components/ui/tooltip';
 export * from './components/ui/collapsible';
+export * from './components/ui/error-boundary';
+export * from './components/ui/skeleton';
+export * from './hooks/use-debounce';
 
 export * from './components/layout/Header';
 export * from './components/layout/Sidebar';

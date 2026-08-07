@@ -65,8 +65,35 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             src={`https://www.googletagmanager.com/gtag/js?id=${settings.analyticsId}`}
           />
         )}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'GovernmentOrganization',
+              name: settings.websiteName || 'Department of Information and Communications Technology',
+              url: 'https://dict.gov.ph',
+              description: settings.description,
+              email: settings.email,
+              telephone: settings.phone,
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: settings.address,
+                addressCountry: 'PH',
+              },
+            }),
+          }}
+        />
       </head>
       <body className="min-h-screen bg-background font-sans text-foreground antialiased flex flex-col justify-between selection:bg-primary/20">
+        {/* WCAG 2.2 Screen Reader Skip Link */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:shadow-lg font-bold text-xs"
+        >
+          Skip to main content
+        </a>
+
         {/* Maintenance Mode Banner */}
         {settings.maintenanceMode && (
           <div className="bg-amber-600 text-white px-4 py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md">
@@ -136,7 +163,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1">{children}</main>
+        <main id="main-content">{children}</main>
 
         {/* Footer */}
         <footer className="bg-slate-950 text-slate-300 border-t border-slate-800 pt-12 pb-8">
