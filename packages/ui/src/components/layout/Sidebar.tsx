@@ -49,67 +49,62 @@ const defaultMenuTree: MenuItem[] = [
     title: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Page Builder',
+    icon: Sparkles,
+    badge: 'New',
     children: [
-      { title: 'Overview', href: '/dashboard' },
-      { title: 'Real-Time Analytics', href: '/dashboard/analytics' },
+      { title: 'Homepage Builder', href: '/page-builder/homepage' },
+      { title: 'Notion Block Builder', href: '/page-builder/notion-blocks' },
     ],
   },
   {
     title: 'Content',
+    href: '/content',
     icon: FileText,
-    badge: '14',
+    badge: 'CMS',
     children: [
       { title: 'All Content Items', href: '/content' },
-      { title: 'Press Releases', href: '/content/press-releases' },
-      { title: 'Public Notices', href: '/content/notices' },
-      { title: 'Executive Orders', href: '/content/executive-orders' },
-      { title: 'Government Pages', href: '/content/pages' },
     ],
   },
   {
-    title: 'Media',
+    title: 'Media Library',
+    href: '/media',
     icon: FolderOpen,
     children: [
-      { title: 'Asset Library', href: '/media' },
-      { title: 'Upload Assets', href: '/media/upload' },
-      { title: 'Media Categories', href: '/media/categories' },
+      { title: 'Media Asset Library', href: '/media' },
     ],
   },
   {
-    title: 'Menus',
+    title: 'Menu Builder',
+    href: '/menus',
     icon: MenuIcon,
     children: [
-      { title: 'Primary Navigation', href: '/menus/primary' },
-      { title: 'Footer Links', href: '/menus/footer' },
-      { title: 'Agency Header Bar', href: '/menus/header' },
+      { title: 'Navigation Menus', href: '/menus' },
     ],
   },
   {
-    title: 'Users',
+    title: 'Users & Access',
+    href: '/users',
     icon: UsersIcon,
-    badge: '8',
     children: [
-      { title: 'Users Directory', href: '/users' },
-      { title: 'Roles & Permissions', href: '/users/roles' },
-      { title: 'Access & Sessions', href: '/users/sessions' },
+      { title: 'User Management', href: '/users' },
     ],
   },
   {
-    title: 'Settings',
+    title: 'Settings & Theme',
     icon: Settings,
     children: [
-      { title: 'General Info', href: '/settings' },
-      { title: 'Branding Tokens', href: '/settings/branding' },
-      { title: 'Security & API Keys', href: '/settings/security' },
+      { title: 'Website Settings', href: '/settings/general' },
+      { title: 'Theme Manager', href: '/settings/theme' },
     ],
   },
   {
-    title: 'Reports',
+    title: 'Reports & Logs',
     icon: BarChart3,
     children: [
-      { title: 'System Health', href: '/reports/health' },
-      { title: 'Audit Trail', href: '/reports/audit-logs' },
-      { title: 'Usage & Storage', href: '/reports/storage' },
+      { title: 'Audit Trail Logs', href: '/reports/audit-logs' },
     ],
   },
 ];
@@ -152,7 +147,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Open state for accordion menus
   const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({
     Dashboard: true,
+    'Page Builder': true,
     Content: true,
+    'Media Library': true,
+    'Menu Builder': true,
+    'Users & Access': true,
+    'Settings & Theme': true,
+    'Reports & Logs': true,
   });
 
   const toggleSubMenu = (title: string) => {
