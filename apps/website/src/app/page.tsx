@@ -64,7 +64,7 @@ export default async function PublicHomePage() {
         sections.map((sec: any) => {
           if (sec.type === 'hero') {
             return (
-              <section key={sec.id} className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-primary/95 to-slate-950 text-white py-24 px-4 sm:px-6 lg:px-8 border-b border-primary/20">
+              <section key={sec.id} className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white py-24 px-4 sm:px-6 lg:px-8 border-b border-blue-900/40">
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
                   <div className="space-y-6 text-center lg:text-left max-w-2xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold border border-white/20 backdrop-blur-xs">
@@ -203,7 +203,7 @@ export default async function PublicHomePage() {
       ) : (
         /* Default Fallback Sections */
         <>
-          <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-primary/95 to-slate-950 text-white py-24 px-4 sm:px-6 lg:px-8 border-b border-primary/20">
+          <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white py-24 px-4 sm:px-6 lg:px-8 border-b border-blue-900/40">
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
               <div className="space-y-6 text-center lg:text-left max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold border border-white/20 backdrop-blur-xs">
