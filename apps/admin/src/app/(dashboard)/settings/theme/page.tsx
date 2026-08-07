@@ -21,6 +21,7 @@ import {
   Code,
   Eye,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Button,
   Card,
@@ -84,6 +85,7 @@ export default function ThemeManagerPage() {
     if (!theme) return;
     await saveMutation.mutateAsync(theme);
     setHasChanges(false);
+    toast.success('Theme draft saved successfully! Live website synced.');
   };
 
   const handlePublish = async () => {
@@ -91,6 +93,7 @@ export default function ThemeManagerPage() {
     await saveMutation.mutateAsync(theme);
     await publishMutation.mutateAsync();
     setHasChanges(false);
+    toast.success('Theme published live to official website!');
   };
 
   if (isLoading || !theme) {

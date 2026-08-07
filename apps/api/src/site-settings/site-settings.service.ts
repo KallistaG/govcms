@@ -1,23 +1,45 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SiteSettingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSettings(userId: string) {
+  private async getOrCreateAgencyId(userId: string): Promise<string> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) return null;
+    if (user?.agencyId) return user.agencyId;
+
+    const firstAgency = await this.prisma.agency.findFirst();
+    if (firstAgency) return firstAgency.id;
+
+    const newAgency = await this.prisma.agency.create({
+      data: {
+        name: 'Department of Information and Communications Technology',
+        code: 'DICT',
+        slug: 'dict',
+      },
+    });
+
+    if (user) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { agencyId: newAgency.id },
+      });
+    }
+
+    return newAgency.id;
+  }
+
+  async getSettings(userId: string) {
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     let settings = await this.prisma.siteSettings.findFirst({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
     });
 
     if (!settings) {
       settings = await this.prisma.siteSettings.create({
-        data: {
-          agencyId: user.agencyId,
-        },
+        data: { agencyId },
       });
     }
 
@@ -25,7 +47,9 @@ export class SiteSettingsService {
   }
 
   async getPublicSettings() {
-    const settings = await this.prisma.siteSettings.findFirst();
+    const settings = await this.prisma.siteSettings.findFirst({
+      orderBy: { updatedAt: 'desc' },
+    });
 
     if (!settings) {
       return {
@@ -52,13 +76,10 @@ export class SiteSettingsService {
   }
 
   async updateSettings(data: Record<string, any>, userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) {
-      throw new BadRequestException('User must belong to an agency');
-    }
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     let settings = await this.prisma.siteSettings.findFirst({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
     });
 
     if (settings) {
@@ -105,7 +126,7 @@ export class SiteSettingsService {
         smtpSenderName: data.smtpSenderName || null,
         maintenanceMode: data.maintenanceMode || false,
         maintenanceMessage: data.maintenanceMessage || null,
-        agencyId: user.agencyId,
+        agencyId,
       },
     });
   }

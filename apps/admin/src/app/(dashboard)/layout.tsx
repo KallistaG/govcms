@@ -5,6 +5,7 @@ import { DashboardShell } from '@govcms/ui';
 import { useAuth } from '../../context/auth-context';
 import { ProtectedRoute } from '../../components/auth/protected-route';
 import { usePathname } from 'next/navigation';
+import { Toaster } from 'sonner';
 
 export default function DashboardLayout({
   children,
@@ -34,6 +35,7 @@ export default function DashboardLayout({
           { label: 'Overview' },
         ]}
       >
+        <Toaster position="top-right" richColors closeButton />
         {children}
       </DashboardShell>
     </ProtectedRoute>

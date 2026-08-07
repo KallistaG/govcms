@@ -14,6 +14,7 @@ import {
   Send,
   AlertOctagon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Button,
   Card,
@@ -58,6 +59,7 @@ export default function GeneralSettingsPage() {
     if (!settings) return;
     await updateMutation.mutateAsync(settings);
     setHasChanges(false);
+    toast.success('Website Settings updated successfully! Live website synced.');
   };
 
   if (isLoading || !settings) {

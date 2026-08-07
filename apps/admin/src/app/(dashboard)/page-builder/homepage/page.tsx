@@ -31,6 +31,7 @@ import {
   Save,
   Monitor,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Button,
   Card,
@@ -78,10 +79,13 @@ export default function HomepageBuilderPage() {
     };
     updateSections([...sections, newSection]);
     setShowAddPanel(false);
+    toast.success(`Added "${meta.label}" section to homepage`);
   };
 
   const removeSection = (id: string) => {
+    const src = sections.find((s: HomepageSection) => s.id === id);
     updateSections(sections.filter((s: HomepageSection) => s.id !== id));
+    toast.error(`Removed section "${src?.title || 'Section'}"`);
   };
 
   const duplicateSection = (id: string) => {
@@ -92,12 +96,16 @@ export default function HomepageBuilderPage() {
     const next = [...sections];
     next.splice(idx + 1, 0, dup);
     updateSections(next);
+    toast.success(`Duplicated "${src.title}"`);
   };
 
   const toggleVisibility = (id: string) => {
+    const src = sections.find((s: HomepageSection) => s.id === id);
+    const nextVisibility = !src?.isVisible;
     updateSections(
       sections.map((s: HomepageSection) => (s.id === id ? { ...s, isVisible: !s.isVisible } : s)),
     );
+    toast.info(`Section "${src?.title}" is now ${nextVisibility ? 'Visible' : 'Hidden'}`);
   };
 
   const moveSection = (index: number, direction: 'up' | 'down') => {
@@ -108,17 +116,20 @@ export default function HomepageBuilderPage() {
     next[index] = next[target];
     next[target] = temp;
     updateSections(next);
+    toast.info(`Moved "${temp.title}" ${direction}`);
   };
 
   const handleSave = async () => {
     await saveMutation.mutateAsync(sections);
     setHasChanges(false);
+    toast.success('Homepage layout saved successfully! Syncing live website...');
   };
 
   const handlePublish = async () => {
     await saveMutation.mutateAsync(sections);
     await publishMutation.mutateAsync();
     setHasChanges(false);
+    toast.success('Homepage layout published live to official website!');
   };
 
   return (

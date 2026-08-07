@@ -13,6 +13,7 @@ import { ContentTable } from '../../../components/content/content-table';
 import { ContentModal } from '../../../components/content/content-modal';
 import { FileText, Newspaper, Megaphone, Calendar, Layers, Plus } from 'lucide-react';
 import { Button } from '@govcms/ui';
+import { toast } from 'sonner';
 
 export default function ContentManagementPage() {
   const [search, setSearch] = React.useState('');
@@ -52,20 +53,24 @@ export default function ContentManagementPage() {
   const handleModalSubmit = async (formData: Partial<ContentItem>) => {
     if (editingItem) {
       await updateMutation.mutateAsync({ id: editingItem.id, data: formData });
+      toast.success(`Updated document "${formData.title || editingItem.title}"`);
     } else {
       await createMutation.mutateAsync(formData);
+      toast.success(`Created document "${formData.title || 'New Item'}"`);
     }
   };
 
   const handleDeleteItem = async (id: string) => {
     if (confirm('Are you sure you want to soft-delete this content item?')) {
       await deleteMutation.mutateAsync(id);
+      toast.error('Content item moved to trash');
     }
   };
 
   const handleBulkAction = async (action: 'delete' | 'publish' | 'archive', ids: string[]) => {
     if (confirm(`Are you sure you want to apply bulk ${action} on ${ids.length} selected item(s)?`)) {
       await bulkMutation.mutateAsync({ action, ids });
+      toast.success(`Applied bulk ${action} on ${ids.length} document(s)`);
     }
   };
 

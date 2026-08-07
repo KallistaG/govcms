@@ -1,25 +1,56 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ThemeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getTheme(userId: string) {
+  private async getOrCreateAgencyId(userId: string): Promise<string> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) return null;
+    if (user?.agencyId) return user.agencyId;
+
+    const firstAgency = await this.prisma.agency.findFirst();
+    if (firstAgency) return firstAgency.id;
+
+    const newAgency = await this.prisma.agency.create({
+      data: {
+        name: 'Department of Information and Communications Technology',
+        code: 'DICT',
+        slug: 'dict',
+      },
+    });
+
+    if (user) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { agencyId: newAgency.id },
+      });
+    }
+
+    return newAgency.id;
+  }
+
+  async getTheme(userId: string) {
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     return this.prisma.themeConfig.findFirst({
-      where: { agencyId: user.agencyId, isActive: true },
+      where: { agencyId, isActive: true },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
   async getPublicTheme() {
-    const theme = await this.prisma.themeConfig.findFirst({
+    let theme = await this.prisma.themeConfig.findFirst({
       where: { isActive: true, publishedAt: { not: null } },
       orderBy: { publishedAt: 'desc' },
     });
+
+    if (!theme) {
+      theme = await this.prisma.themeConfig.findFirst({
+        where: { isActive: true },
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
 
     if (!theme) {
       return {
@@ -41,13 +72,10 @@ export class ThemeService {
   }
 
   async saveTheme(data: Record<string, any>, userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) {
-      throw new BadRequestException('User must belong to an agency');
-    }
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     const existing = await this.prisma.themeConfig.findFirst({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
     });
 
     if (existing) {
@@ -66,6 +94,7 @@ export class ThemeService {
           buttonStyle: data.buttonStyle !== undefined ? data.buttonStyle : existing.buttonStyle,
           darkModeEnabled: data.darkModeEnabled ?? existing.darkModeEnabled,
           customCss: data.customCss !== undefined ? data.customCss : existing.customCss,
+          publishedAt: new Date(), // Instant public site sync
         },
       });
     }
@@ -85,23 +114,21 @@ export class ThemeService {
         darkModeEnabled: data.darkModeEnabled || false,
         customCss: data.customCss || null,
         isActive: true,
-        agencyId: user.agencyId,
+        publishedAt: new Date(),
+        agencyId,
         authorId: userId,
       },
     });
   }
 
   async publishTheme(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) {
-      throw new BadRequestException('User must belong to an agency');
-    }
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     const theme = await this.prisma.themeConfig.findFirst({
-      where: { agencyId: user.agencyId, isActive: true },
+      where: { agencyId, isActive: true },
     });
 
-    if (!theme) throw new NotFoundException('No theme configuration found');
+    if (!theme) return null;
 
     return this.prisma.themeConfig.update({
       where: { id: theme.id },

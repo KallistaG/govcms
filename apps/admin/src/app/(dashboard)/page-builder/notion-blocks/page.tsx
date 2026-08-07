@@ -39,6 +39,7 @@ import {
   Blocks,
   Settings,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Button,
   Card,
@@ -83,6 +84,7 @@ export default function NotionBlockBuilderPage() {
 
   const addBlock = (type: BlockType) => {
     const defaultConfig = getDefaultConfig(type);
+    const meta = BLOCK_TYPE_META[type];
     const newBlock: PageBlock = {
       id: `blk-${Date.now()}`,
       type,
@@ -92,20 +94,26 @@ export default function NotionBlockBuilderPage() {
     };
     updateBlocks([...blocks, newBlock]);
     setShowAddPanel(false);
+    toast.success(`Added "${meta.label}" block to page`);
   };
 
   const removeBlock = (id: string) => {
+    const src = blocks.find((b: PageBlock) => b.id === id);
+    const meta = BLOCK_TYPE_META[src?.type || 'paragraph'];
     updateBlocks(blocks.filter((b: PageBlock) => b.id !== id));
+    toast.error(`Removed "${meta.label}" block`);
   };
 
   const duplicateBlock = (id: string) => {
     const src = blocks.find((b: PageBlock) => b.id === id);
     if (!src) return;
+    const meta = BLOCK_TYPE_META[src.type];
     const dup: PageBlock = { ...src, id: `blk-${Date.now()}` };
     const idx = blocks.findIndex((b: PageBlock) => b.id === id);
     const next = [...blocks];
     next.splice(idx + 1, 0, dup);
     updateBlocks(next);
+    toast.success(`Duplicated "${meta.label}" block`);
   };
 
   const toggleCollapse = (id: string) => {
@@ -120,6 +128,8 @@ export default function NotionBlockBuilderPage() {
     next[index] = next[target];
     next[target] = temp;
     updateBlocks(next);
+    const meta = BLOCK_TYPE_META[temp.type];
+    toast.info(`Moved "${meta.label}" block ${direction}`);
   };
 
   const updateBlockConfig = (id: string, key: string, value: unknown) => {
@@ -134,12 +144,14 @@ export default function NotionBlockBuilderPage() {
   const handleSave = async () => {
     await saveMutation.mutateAsync({ slug, title: pageTitle, blocks });
     setHasChanges(false);
+    toast.success('Page blocks saved successfully! Syncing live website...');
   };
 
   const handlePublish = async () => {
     await saveMutation.mutateAsync({ slug, title: pageTitle, blocks });
     await publishMutation.mutateAsync(slug);
     setHasChanges(false);
+    toast.success('Page published live to official website!');
   };
 
   return (

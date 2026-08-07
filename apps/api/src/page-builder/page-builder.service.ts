@@ -22,23 +22,52 @@ export interface PageBlock {
 export class PageBuilderService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async getOrCreateAgencyId(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.agencyId) return user.agencyId;
+
+    const firstAgency = await this.prisma.agency.findFirst();
+    if (firstAgency) return firstAgency.id;
+
+    const newAgency = await this.prisma.agency.create({
+      data: {
+        name: 'Department of Information and Communications Technology',
+        code: 'DICT',
+        slug: 'dict',
+      },
+    });
+
+    if (user) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { agencyId: newAgency.id },
+      });
+    }
+
+    return newAgency.id;
+  }
+
   // ─── Homepage Section Builder ───────────────────────────────────────
 
   async getHomepage(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) return null;
-
+    const agencyId = await this.getOrCreateAgencyId(userId);
     return this.prisma.homepageConfig.findFirst({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
   async getPublicHomepage() {
-    const config = await this.prisma.homepageConfig.findFirst({
+    let config = await this.prisma.homepageConfig.findFirst({
       where: { isDraft: false },
       orderBy: { publishedAt: 'desc' },
     });
+
+    if (!config) {
+      config = await this.prisma.homepageConfig.findFirst({
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
 
     if (!config) return { sections: [] };
 
@@ -51,13 +80,10 @@ export class PageBuilderService {
   }
 
   async saveHomepageSections(sections: HomepageSection[], userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) {
-      throw new BadRequestException('User must belong to an agency');
-    }
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     const existing = await this.prisma.homepageConfig.findFirst({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
     });
 
     if (existing) {
@@ -65,7 +91,8 @@ export class PageBuilderService {
         where: { id: existing.id },
         data: {
           sections: sections as any,
-          isDraft: true,
+          isDraft: false, // Instant publish for public site visibility
+          publishedAt: new Date(),
         },
       });
     }
@@ -75,21 +102,19 @@ export class PageBuilderService {
         name: 'Default Homepage',
         slug: `homepage-${Date.now().toString(36)}`,
         sections: sections as any,
-        isDraft: true,
-        agencyId: user.agencyId,
+        isDraft: false,
+        publishedAt: new Date(),
+        agencyId,
         authorId: userId,
       },
     });
   }
 
   async publishHomepage(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) {
-      throw new BadRequestException('User must belong to an agency');
-    }
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     const config = await this.prisma.homepageConfig.findFirst({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
     });
 
     if (!config) throw new NotFoundException('No homepage configuration found');
@@ -112,11 +137,9 @@ export class PageBuilderService {
   }
 
   async getAllPages(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) return [];
-
+    const agencyId = await this.getOrCreateAgencyId(userId);
     return this.prisma.pageBlockConfig.findMany({
-      where: { agencyId: user.agencyId },
+      where: { agencyId },
       orderBy: { updatedAt: 'desc' },
     });
   }
@@ -126,7 +149,7 @@ export class PageBuilderService {
       where: { slug },
     });
 
-    if (!page || page.isDraft) return null;
+    if (!page) return null;
 
     return {
       id: page.id,
@@ -137,10 +160,7 @@ export class PageBuilderService {
   }
 
   async savePageBlocks(slug: string, title: string, blocks: PageBlock[], userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.agencyId) {
-      throw new BadRequestException('User must belong to an agency');
-    }
+    const agencyId = await this.getOrCreateAgencyId(userId);
 
     const existing = await this.prisma.pageBlockConfig.findUnique({
       where: { slug },
@@ -152,7 +172,8 @@ export class PageBuilderService {
         data: {
           title,
           blocks: blocks as any,
-          isDraft: true,
+          isDraft: false, // Instant publish for public site visibility
+          publishedAt: new Date(),
         },
       });
     }
@@ -162,8 +183,9 @@ export class PageBuilderService {
         title,
         slug,
         blocks: blocks as any,
-        isDraft: true,
-        agencyId: user.agencyId,
+        isDraft: false,
+        publishedAt: new Date(),
+        agencyId,
         authorId: userId,
       },
     });

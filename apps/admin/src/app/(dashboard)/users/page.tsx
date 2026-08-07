@@ -22,6 +22,7 @@ import {
   XCircle,
   Copy,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Button,
   Input,
@@ -66,28 +67,34 @@ export default function UserManagementPage() {
   const handleUserModalSubmit = async (formData: Partial<UserData> & { password?: string }) => {
     if (editingUser) {
       await updateUserMutation.mutateAsync({ id: editingUser.id, data: formData });
+      toast.success(`Updated profile for ${formData.firstName} ${formData.lastName}`);
     } else {
       await createUserMutation.mutateAsync(formData);
+      toast.success(`Created staff account for ${formData.firstName} ${formData.lastName}`);
     }
   };
 
   const handleToggleStatus = async (user: UserData) => {
+    const nextState = !user.isActive;
     await updateUserMutation.mutateAsync({
       id: user.id,
-      data: { isActive: !user.isActive },
+      data: { isActive: nextState },
     });
+    toast.info(`Account status for ${user.firstName} is now ${nextState ? 'Active' : 'Inactive'}`);
   };
 
   const handleResetPassword = async (user: UserData) => {
     if (confirm(`Reset password for ${user.firstName} ${user.lastName} (${user.email})?`)) {
       const res = await resetPasswordMutation.mutateAsync({ id: user.id });
       setResetPassResult({ email: user.email, pass: res.tempPassword });
+      toast.success(`Temporary password generated for ${user.firstName}`);
     }
   };
 
   const handleDeleteUser = async (id: string) => {
     if (confirm('Are you sure you want to delete this staff user account?')) {
       await deleteUserMutation.mutateAsync(id);
+      toast.error('Staff account deleted');
     }
   };
 
