@@ -17,6 +17,7 @@ import {
   PanelBottom,
   MousePointer,
   Moon,
+  Sun,
   Code,
   Eye,
 } from 'lucide-react';
