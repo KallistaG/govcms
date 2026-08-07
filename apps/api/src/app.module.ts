@@ -9,6 +9,7 @@ import { PageBuilderModule } from './page-builder/page-builder.module';
 import { ThemeModule } from './theme/theme.module';
 import { UsersModule } from './users/users.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { SiteSettingsModule } from './site-settings/site-settings.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
     ThemeModule,
     UsersModule,
     AuditLogsModule,
+    SiteSettingsModule,
   ],
 })
 export class AppModule {}

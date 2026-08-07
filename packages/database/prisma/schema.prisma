@@ -56,6 +56,7 @@ model Agency {
   homepageConfigs HomepageConfig[]
   pageBlocks      PageBlockConfig[]
   themeConfigs    ThemeConfig[]
+  siteSettings    SiteSettings[]
 
   @@map("agencies")
 }
@@ -310,4 +311,31 @@ model ThemeConfig {
   author          User     @relation("ThemeAuthor", fields: [authorId], references: [id])
 
   @@map("theme_configs")
+}
+
+model SiteSettings {
+  id                 String   @id @default(uuid())
+  websiteName        String   @default("Department of Information and Communications Technology")
+  description        String?  @default("Official government portal for public services, press releases, executive orders, and agency updates.")
+  keywords           String?  @default("govcms, philippines, dict, government, public services")
+  email              String?  @default("info@dict.gov.ph")
+  phone              String?  @default("+63 (02) 8920-0101")
+  address            String?  @default("DICT Building, C.P. Garcia Ave., Diliman, Quezon City, 1101 Philippines")
+  googleMapsUrl      String?  @default("https://maps.google.com/maps?q=DICT+Quezon+City&t=&z=15&ie=UTF8&iwloc=&output=embed")
+  socialLinks        Json?    // {facebook, twitter, youtube, instagram, linkedin}
+  analyticsId        String?  @default("G-GOVCMS2026")
+  smtpHost           String?  @default("smtp.gov.ph")
+  smtpPort           Int?     @default(587)
+  smtpUser           String?  @default("notifications@dict.gov.ph")
+  smtpPassword       String?
+  smtpEncryption     String?  @default("TLS")
+  smtpSenderName     String?  @default("GovCMS System Notifications")
+  maintenanceMode    Boolean  @default(false)
+  maintenanceMessage String?  @default("The official agency portal is currently undergoing scheduled system maintenance. Please check back shortly.")
+  agencyId           String
+  updatedAt          DateTime @updatedAt
+
+  agency             Agency   @relation(fields: [agencyId], references: [id])
+
+  @@map("site_settings")
 }

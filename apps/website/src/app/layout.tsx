@@ -1,20 +1,194 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import './globals.css';
+import {
+  Globe,
+  ExternalLink,
+  Phone,
+  Mail,
+  MapPin,
+  AlertTriangle,
+} from 'lucide-react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+
+export const revalidate = 60; // ISR revalidation every 60 seconds
 
 export const metadata: Metadata = {
-  title: 'Official Government Public Services Portal | GovCMS',
-  description: 'Access official press releases, government services, executive orders, and public notices.',
+  title: 'Department of Information and Communications Technology | Official Portal',
+  description:
+    'Official government portal for public services, press releases, executive orders, public notices, and ICT projects.',
+  keywords: 'govcms, philippines, dict, government, public services, press release',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+async function getSiteConfig() {
+  try {
+    const res = await fetch(`${API_URL}/site-settings/public`, { next: { revalidate: 60 } });
+    if (res.ok) return await res.json();
+  } catch {
+    // fallback
+  }
+  return {
+    websiteName: 'Department of Information and Communications Technology',
+    description: 'Official government portal for public services, press releases, and agency updates.',
+    email: 'info@dict.gov.ph',
+    phone: '+63 (02) 8920-0101',
+    address: 'DICT Building, C.P. Garcia Ave., Diliman, Quezon City, 1101 Philippines',
+    socialLinks: { facebook: 'https://facebook.com/DICTgovph', twitter: 'https://twitter.com/DICTgovph' },
+    analyticsId: 'G-GOVCMS2026',
+    maintenanceMode: false,
+    maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance.',
+  };
+}
+
+async function getPublicMenu(location: string) {
+  try {
+    const res = await fetch(`${API_URL}/menus/public/${location}`, { next: { revalidate: 60 } });
+    if (res.ok) return await res.json();
+  } catch {
+    // fallback
+  }
+  return { items: [] };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const settings = await getSiteConfig();
+  const headerMenu = await getPublicMenu('HEADER_MENU');
+  const footerMenu = await getPublicMenu('FOOTER_MENU');
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        {children}
+    <html lang="en" className="scroll-smooth">
+      <head>
+        {settings.analyticsId && (
+          <script
+            async
+            src={`https://www.googletagmanager.com/gtag/js?id=${settings.analyticsId}`}
+          />
+        )}
+      </head>
+      <body className="min-h-screen bg-background font-sans text-foreground antialiased flex flex-col justify-between selection:bg-primary/20">
+        {/* Maintenance Mode Banner */}
+        {settings.maintenanceMode && (
+          <div className="bg-amber-600 text-white px-4 py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md">
+            <AlertTriangle className="h-4 w-4 shrink-0 animate-bounce" />
+            <span>{settings.maintenanceMessage || 'System Maintenance in progress.'}</span>
+          </div>
+        )}
+
+        {/* Top Republic Bar */}
+        <div className="bg-slate-950 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="font-bold text-amber-400 uppercase tracking-wider">Republic of the Philippines</span>
+            <span className="hidden sm:inline text-slate-500">•</span>
+            <span className="hidden sm:inline">Official Government Agency Portal</span>
+          </div>
+          <div className="flex items-center gap-4 text-[10px] font-mono">
+            <span>PST: {new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+        </div>
+
+        {/* Main Agency Header Navbar */}
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b shadow-2xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform">
+                <Globe className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
+                  {settings.websiteName || 'GovCMS Agency Portal'}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-semibold">
+                  GOV.PH Official Web Platform
+                </span>
+              </div>
+            </Link>
+
+            {/* Dynamic Navigation Menu Items */}
+            <nav className="hidden md:flex items-center gap-1 text-xs font-semibold">
+              <Link href="/" className="px-3 py-2 rounded-lg text-foreground hover:bg-accent hover:text-primary transition-colors">
+                Home
+              </Link>
+              <Link href="/news" className="px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-primary transition-colors">
+                News & Press
+              </Link>
+              <Link href="/events" className="px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-primary transition-colors">
+                Events
+              </Link>
+              <Link href="/downloads" className="px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-primary transition-colors">
+                FOI Downloads
+              </Link>
+
+              {headerMenu.items &&
+                headerMenu.items.map((item: any) => (
+                  <Link
+                    key={item.id}
+                    href={item.url}
+                    target={item.openInNewTab ? '_blank' : '_self'}
+                    className="px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-primary transition-colors flex items-center gap-1"
+                  >
+                    {item.title}
+                    {item.isExternal && <ExternalLink className="h-3 w-3 opacity-60" />}
+                  </Link>
+                ))}
+            </nav>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="flex-1">{children}</main>
+
+        {/* Footer */}
+        <footer className="bg-slate-950 text-slate-300 border-t border-slate-800 pt-12 pb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-slate-800">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-white font-bold text-sm">
+                  <Globe className="h-5 w-5 text-primary" />
+                  <span>{settings.websiteName}</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {settings.description}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Navigation Links</h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li><Link href="/" className="hover:text-white transition-colors">Home Portal</Link></li>
+                  <li><Link href="/news" className="hover:text-white transition-colors">Press Releases & News</Link></li>
+                  <li><Link href="/events" className="hover:text-white transition-colors">Agency Events Calendar</Link></li>
+                  <li><Link href="/downloads" className="hover:text-white transition-colors">Freedom of Information (FOI)</Link></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Agency Contact</h4>
+                <ul className="space-y-2 text-xs text-slate-400 font-mono">
+                  <li className="flex items-center gap-2"><Mail className="h-3.5 w-3.5 text-primary" /> {settings.email}</li>
+                  <li className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 text-primary" /> {settings.phone}</li>
+                  <li className="flex items-start gap-2"><MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" /> <span className="font-sans text-[11px]">{settings.address}</span></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">GOV.PH Links</h4>
+                <ul className="space-y-2 text-xs text-slate-400">
+                  <li><a href="https://www.gov.ph" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">Official Gazette <ExternalLink className="h-3 w-3" /></a></li>
+                  <li><a href="https://dict.gov.ph" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">DICT Central Portal <ExternalLink className="h-3 w-3" /></a></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+              <span>© {new Date().getFullYear()} Republic of the Philippines. All rights reserved.</span>
+              <div className="flex items-center gap-4 text-[11px]">
+                <Link href="/privacy" className="hover:text-slate-300 transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="hover:text-slate-300 transition-colors">Terms of Use</Link>
+              </div>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );
