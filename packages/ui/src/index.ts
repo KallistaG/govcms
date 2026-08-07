@@ -23,3 +23,6 @@ export * from './components/dashboard/QuickActionsWidget';
 export * from './components/dashboard/LatestNewsWidget';
 export * from './components/dashboard/RecentFilesWidget';
 export * from './components/dashboard/RecentLoginsWidget';
+
+export * from './components/content/ContentStatusBadge';
+export * from './components/content/ContentTypeBadge';

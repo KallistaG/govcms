@@ -26,11 +26,10 @@ enum ContentStatusEnum {
 }
 
 enum ContentTypeEnum {
+  PAGE_DOCUMENT
   PRESS_RELEASE
   PUBLIC_NOTICE
-  GOVERNMENT_SERVICE
-  EXECUTIVE_ORDER
-  PAGE_DOCUMENT
+  EVENT
 }
 
 model Agency {
@@ -102,21 +101,26 @@ model PasswordResetToken {
 }
 
 model ContentItem {
-  id          String            @id @default(uuid())
-  title       String
-  slug        String            @unique
-  summary     String?
-  body        String
-  type        ContentTypeEnum   @default(PRESS_RELEASE)
-  status      ContentStatusEnum @default(DRAFT)
-  publishedAt DateTime?
-  authorId    String
-  agencyId    String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id            String            @id @default(uuid())
+  title         String
+  slug          String            @unique
+  summary       String?
+  body          String
+  type          ContentTypeEnum   @default(PRESS_RELEASE)
+  status        ContentStatusEnum @default(DRAFT)
+  featuredImage String?
+  eventDate     DateTime?
+  location      String?
+  isDeleted     Boolean           @default(false)
+  deletedAt     DateTime?
+  publishedAt   DateTime?
+  authorId      String
+  agencyId      String
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  author      User              @relation("UserContentAuthor", fields: [authorId], references: [id])
-  agency      Agency            @relation(fields: [agencyId], references: [id])
+  author        User              @relation("UserContentAuthor", fields: [authorId], references: [id])
+  agency        Agency            @relation(fields: [agencyId], references: [id])
 
   @@map("content_items")
 }
@@ -124,7 +128,7 @@ model ContentItem {
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
-  action     String   // e.g. "LOGIN", "REFRESH_TOKEN", "FORGOT_PASSWORD", "RESET_PASSWORD"
+  action     String   // e.g. "LOGIN", "CREATE_CONTENT", "BULK_PUBLISH", "SOFT_DELETE"
   entityType String   // e.g. "ContentItem", "User", "Auth"
   entityId   String?
   metadata   Json?
