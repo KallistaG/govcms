@@ -12,6 +12,7 @@ import {
   CardFooter,
   Input,
   Label,
+  TipTapEditor,
 } from '@govcms/ui';
 
 interface ContentModalProps {
@@ -85,7 +86,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <Card className="w-full max-w-2xl shadow-2xl border bg-card max-h-[90vh] flex flex-col">
+      <Card className="w-full max-w-4xl shadow-2xl border bg-card max-h-[92vh] flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -93,10 +94,10 @@ export const ContentModal: React.FC<ContentModalProps> = ({
             </div>
             <div>
               <CardTitle className="text-lg">
-                {initialData ? 'Edit Content Item' : 'Create New Content Item'}
+                {initialData ? 'Edit Content Document' : 'Create New Content Document'}
               </CardTitle>
               <CardDescription className="text-xs">
-                Author official government pages, press releases, public notices, or events.
+                Author official government pages, press releases, notices, or events with TipTap Rich Text Editor.
               </CardDescription>
             </div>
           </div>
@@ -182,16 +183,15 @@ export const ContentModal: React.FC<ContentModalProps> = ({
               />
             </div>
 
+            {/* TipTap Rich Text Editor for Document Body */}
             <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="body">Body Content</Label>
-              <textarea
-                id="body"
-                rows={6}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="Write full official document content here..."
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                required
+              <Label>Document Body (TipTap Rich Text Editor)</Label>
+              <TipTapEditor
+                content={body}
+                onChange={(html) => setBody(html)}
+                onAutoSave={async (html) => {
+                  setBody(html);
+                }}
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving Document...
                 </>
               ) : (
-                'Save Content Item'
+                'Save Content Document'
               )}
             </Button>
           </CardFooter>

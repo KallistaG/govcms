@@ -26,3 +26,5 @@ export * from './components/dashboard/RecentLoginsWidget';
 
 export * from './components/content/ContentStatusBadge';
 export * from './components/content/ContentTypeBadge';
+
+export * from './components/editor/TipTapEditor';
