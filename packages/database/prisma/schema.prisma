@@ -55,6 +55,7 @@ model Agency {
   menus           Menu[]
   homepageConfigs HomepageConfig[]
   pageBlocks      PageBlockConfig[]
+  themeConfigs    ThemeConfig[]
 
   @@map("agencies")
 }
@@ -84,6 +85,7 @@ model User {
   createdMenus        Menu[]               @relation("MenuCreator")
   homepageConfigs     HomepageConfig[]     @relation("HomepageAuthor")
   pageBlocks          PageBlockConfig[]    @relation("PageBlockAuthor")
+  themeConfigs        ThemeConfig[]        @relation("ThemeAuthor")
 
   @@map("users")
 }
@@ -273,4 +275,31 @@ model PageBlockConfig {
   author      User     @relation("PageBlockAuthor", fields: [authorId], references: [id])
 
   @@map("page_block_configs")
+}
+
+model ThemeConfig {
+  id              String   @id @default(uuid())
+  websiteName     String   @default("GovCMS Agency Portal")
+  logoUrl         String?
+  faviconUrl      String?
+  primaryColor    String   @default("#1d4ed8")
+  secondaryColor  String   @default("#7c3aed")
+  fontHeading     String   @default("Inter")
+  fontBody        String   @default("Inter")
+  navbarStyle     Json?    // {bgColor, textColor, position, height}
+  footerStyle     Json?    // {bgColor, textColor, showSocials, copyright}
+  buttonStyle     Json?    // {borderRadius, fontWeight, textTransform}
+  darkModeEnabled Boolean  @default(false)
+  customCss       String?  @db.Text
+  isActive        Boolean  @default(true)
+  publishedAt     DateTime?
+  agencyId        String
+  authorId        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  agency          Agency   @relation(fields: [agencyId], references: [id])
+  author          User     @relation("ThemeAuthor", fields: [authorId], references: [id])
+
+  @@map("theme_configs")
 }

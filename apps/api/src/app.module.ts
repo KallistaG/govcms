@@ -6,6 +6,7 @@ import { ContentModule } from './content/content.module';
 import { MediaModule } from './media/media.module';
 import { MenusModule } from './menus/menus.module';
 import { PageBuilderModule } from './page-builder/page-builder.module';
+import { ThemeModule } from './theme/theme.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PageBuilderModule } from './page-builder/page-builder.module';
     MediaModule,
     MenusModule,
     PageBuilderModule,
+    ThemeModule,
   ],
 })
 export class AppModule {}
