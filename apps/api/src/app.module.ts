@@ -5,6 +5,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ContentModule } from './content/content.module';
 import { MediaModule } from './media/media.module';
 import { MenusModule } from './menus/menus.module';
+import { PageBuilderModule } from './page-builder/page-builder.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MenusModule } from './menus/menus.module';
     ContentModule,
     MediaModule,
     MenusModule,
+    PageBuilderModule,
   ],
 })
 export class AppModule {}

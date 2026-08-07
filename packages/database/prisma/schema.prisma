@@ -50,9 +50,11 @@ model Agency {
 
   users        User[]
   contentItems ContentItem[]
-  mediaFolders MediaFolder[]
-  mediaAssets  MediaAsset[]
-  menus        Menu[]
+  mediaFolders    MediaFolder[]
+  mediaAssets     MediaAsset[]
+  menus           Menu[]
+  homepageConfigs HomepageConfig[]
+  pageBlocks      PageBlockConfig[]
 
   @@map("agencies")
 }
@@ -80,6 +82,8 @@ model User {
   createdFolders      MediaFolder[]        @relation("FolderCreator")
   uploadedAssets      MediaAsset[]         @relation("AssetUploader")
   createdMenus        Menu[]               @relation("MenuCreator")
+  homepageConfigs     HomepageConfig[]     @relation("HomepageAuthor")
+  pageBlocks          PageBlockConfig[]    @relation("PageBlockAuthor")
 
   @@map("users")
 }
@@ -233,4 +237,40 @@ model AuditLog {
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
+}
+
+model HomepageConfig {
+  id          String   @id @default(uuid())
+  name        String   @default("Default Homepage")
+  slug        String   @unique @default("homepage")
+  sections    Json     // Array of section objects with type, order, visibility, config
+  isDraft     Boolean  @default(true)
+  publishedAt DateTime?
+  agencyId    String
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agency      Agency   @relation(fields: [agencyId], references: [id])
+  author      User     @relation("HomepageAuthor", fields: [authorId], references: [id])
+
+  @@map("homepage_configs")
+}
+
+model PageBlockConfig {
+  id          String   @id @default(uuid())
+  title       String   @default("Untitled Page")
+  slug        String   @unique
+  blocks      Json     // Array of block objects with type, order, config, collapsed state
+  isDraft     Boolean  @default(true)
+  publishedAt DateTime?
+  agencyId    String
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agency      Agency   @relation(fields: [agencyId], references: [id])
+  author      User     @relation("PageBlockAuthor", fields: [authorId], references: [id])
+
+  @@map("page_block_configs")
 }
