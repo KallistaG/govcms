@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const STORAGE_KEY = 'govcms_site_settings';
 
 export interface SiteSettingsData {
   websiteName: string;
@@ -57,7 +58,29 @@ const DEFAULT_SETTINGS: SiteSettingsData = {
   maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance. Please check back shortly.',
 };
 
-let memorySettings = { ...DEFAULT_SETTINGS };
+function getLocalSettings(): SiteSettingsData {
+  if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // fallback
+  }
+  return DEFAULT_SETTINGS;
+}
+
+function saveLocalSettings(data: Partial<SiteSettingsData>): SiteSettingsData {
+  const current = getLocalSettings();
+  const next = { ...current, ...data };
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // fallback
+    }
+  }
+  return next;
+}
 
 export function useSiteSettings() {
   return useQuery({
@@ -67,11 +90,17 @@ export function useSiteSettings() {
         const res = await fetch(`${API_URL}/site-settings`, {
           headers: getAuthHeader(),
         });
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          const remoteData = await res.json();
+          if (remoteData) {
+            saveLocalSettings(remoteData);
+            return remoteData;
+          }
+        }
       } catch {
         // Fallback
       }
-      return { ...memorySettings };
+      return getLocalSettings();
     },
   });
 }
@@ -80,18 +109,22 @@ export function useUpdateSiteSettings() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<SiteSettingsData>) => {
-      memorySettings = { ...memorySettings, ...data };
+      const updatedLocal = saveLocalSettings(data);
       try {
         const res = await fetch(`${API_URL}/site-settings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
           body: JSON.stringify(data),
         });
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          const remoteRes = await res.json();
+          saveLocalSettings(remoteRes);
+          return remoteRes;
+        }
       } catch {
         // Fallback
       }
-      return { message: 'Settings updated' };
+      return updatedLocal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings'] });
@@ -106,11 +139,14 @@ export function usePublicSiteSettings() {
     queryFn: async (): Promise<SiteSettingsData> => {
       try {
         const res = await fetch(`${API_URL}/site-settings/public`);
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          const remoteData = await res.json();
+          if (remoteData) return remoteData;
+        }
       } catch {
         // Fallback
       }
-      return { ...memorySettings };
+      return getLocalSettings();
     },
   });
 }

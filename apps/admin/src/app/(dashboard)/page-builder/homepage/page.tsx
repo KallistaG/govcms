@@ -56,10 +56,10 @@ export default function HomepageBuilderPage() {
   const [showAddPanel, setShowAddPanel] = React.useState(false);
 
   React.useEffect(() => {
-    if (initialSections.length > 0 && sections.length === 0) {
+    if (initialSections.length > 0 && !hasChanges) {
       setSections(initialSections);
     }
-  }, [initialSections, sections.length]);
+  }, [initialSections, hasChanges]);
 
   const updateSections = (next: HomepageSection[]) => {
     const reordered = next.map((s: HomepageSection, i: number) => ({ ...s, order: i }));

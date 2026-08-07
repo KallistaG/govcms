@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const STORAGE_KEY = 'govcms_theme_config';
 
 export interface ThemeConfig {
   websiteName: string;
@@ -63,7 +64,29 @@ const DEFAULT_THEME: ThemeConfig = {
   customCss: null,
 };
 
-let memoryTheme: ThemeConfig = { ...DEFAULT_THEME };
+function getLocalTheme(): ThemeConfig {
+  if (typeof window === 'undefined') return DEFAULT_THEME;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // fallback
+  }
+  return DEFAULT_THEME;
+}
+
+function saveLocalTheme(theme: Partial<ThemeConfig>): ThemeConfig {
+  const current = getLocalTheme();
+  const next = { ...current, ...theme };
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // fallback
+    }
+  }
+  return next;
+}
 
 export function useThemeConfig() {
   return useQuery({
@@ -73,10 +96,15 @@ export function useThemeConfig() {
         const res = await fetch(`${API_URL}/theme`, { headers: getAuthHeader() });
         if (res.ok) {
           const data = await res.json();
-          if (data) return data;
+          if (data) {
+            saveLocalTheme(data);
+            return data;
+          }
         }
-      } catch { /* fallback */ }
-      return { ...memoryTheme };
+      } catch {
+        // fallback
+      }
+      return getLocalTheme();
     },
   });
 }
@@ -85,18 +113,27 @@ export function useSaveTheme() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (theme: Partial<ThemeConfig>) => {
-      memoryTheme = { ...memoryTheme, ...theme };
+      const updatedLocal = saveLocalTheme(theme);
       try {
         const res = await fetch(`${API_URL}/theme`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
           body: JSON.stringify(theme),
         });
-        if (res.ok) return await res.json();
-      } catch { /* fallback */ }
-      return { message: 'Saved' };
+        if (res.ok) {
+          const remoteData = await res.json();
+          saveLocalTheme(remoteData);
+          return remoteData;
+        }
+      } catch {
+        // fallback
+      }
+      return updatedLocal;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['theme-config'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['theme-config'] });
+      qc.invalidateQueries({ queryKey: ['public-theme'] });
+    },
   });
 }
 
@@ -110,10 +147,15 @@ export function usePublishTheme() {
           headers: getAuthHeader(),
         });
         if (res.ok) return await res.json();
-      } catch { /* fallback */ }
+      } catch {
+        // fallback
+      }
       return { message: 'Published' };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['theme-config'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['theme-config'] });
+      qc.invalidateQueries({ queryKey: ['public-theme'] });
+    },
   });
 }
 
@@ -123,9 +165,14 @@ export function usePublicTheme() {
     queryFn: async (): Promise<ThemeConfig> => {
       try {
         const res = await fetch(`${API_URL}/theme/public`);
-        if (res.ok) return await res.json();
-      } catch { /* fallback */ }
-      return { ...DEFAULT_THEME };
+        if (res.ok) {
+          const data = await res.json();
+          if (data) return data;
+        }
+      } catch {
+        // fallback
+      }
+      return getLocalTheme();
     },
   });
 }

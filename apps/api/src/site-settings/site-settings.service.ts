@@ -5,9 +5,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SiteSettingsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async getOrCreateAgencyId(userId: string): Promise<string> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user?.agencyId) return user.agencyId;
+  private async getOrCreateAgencyId(userId?: string): Promise<string> {
+    if (userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user?.agencyId) return user.agencyId;
+    }
 
     const firstAgency = await this.prisma.agency.findFirst();
     if (firstAgency) return firstAgency.id;
@@ -20,22 +22,21 @@ export class SiteSettingsService {
       },
     });
 
-    if (user) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { agencyId: newAgency.id },
-      });
-    }
-
     return newAgency.id;
   }
 
-  async getSettings(userId: string) {
+  async getSettings(userId?: string) {
     const agencyId = await this.getOrCreateAgencyId(userId);
 
     let settings = await this.prisma.siteSettings.findFirst({
       where: { agencyId },
     });
+
+    if (!settings) {
+      settings = await this.prisma.siteSettings.findFirst({
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
 
     if (!settings) {
       settings = await this.prisma.siteSettings.create({
@@ -75,12 +76,18 @@ export class SiteSettingsService {
     return settings;
   }
 
-  async updateSettings(data: Record<string, any>, userId: string) {
+  async updateSettings(data: Record<string, any>, userId?: string) {
     const agencyId = await this.getOrCreateAgencyId(userId);
 
     let settings = await this.prisma.siteSettings.findFirst({
       where: { agencyId },
     });
+
+    if (!settings) {
+      settings = await this.prisma.siteSettings.findFirst({
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
 
     if (settings) {
       return this.prisma.siteSettings.update({

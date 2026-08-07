@@ -5,9 +5,11 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ThemeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async getOrCreateAgencyId(userId: string): Promise<string> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (user?.agencyId) return user.agencyId;
+  private async getOrCreateAgencyId(userId?: string): Promise<string> {
+    if (userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user?.agencyId) return user.agencyId;
+    }
 
     const firstAgency = await this.prisma.agency.findFirst();
     if (firstAgency) return firstAgency.id;
@@ -20,23 +22,25 @@ export class ThemeService {
       },
     });
 
-    if (user) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { agencyId: newAgency.id },
-      });
-    }
-
     return newAgency.id;
   }
 
-  async getTheme(userId: string) {
+  async getTheme(userId?: string) {
     const agencyId = await this.getOrCreateAgencyId(userId);
 
-    return this.prisma.themeConfig.findFirst({
+    let config = await this.prisma.themeConfig.findFirst({
       where: { agencyId, isActive: true },
       orderBy: { updatedAt: 'desc' },
     });
+
+    if (!config) {
+      config = await this.prisma.themeConfig.findFirst({
+        where: { isActive: true },
+        orderBy: { updatedAt: 'desc' },
+      });
+    }
+
+    return config;
   }
 
   async getPublicTheme() {
@@ -71,8 +75,14 @@ export class ThemeService {
     return theme;
   }
 
-  async saveTheme(data: Record<string, any>, userId: string) {
+  async saveTheme(data: Record<string, any>, userId?: string) {
     const agencyId = await this.getOrCreateAgencyId(userId);
+
+    let authorId = userId;
+    if (!authorId) {
+      const adminUser = await this.prisma.user.findFirst();
+      authorId = adminUser?.id || agencyId;
+    }
 
     const existing = await this.prisma.themeConfig.findFirst({
       where: { agencyId },
@@ -94,7 +104,7 @@ export class ThemeService {
           buttonStyle: data.buttonStyle !== undefined ? data.buttonStyle : existing.buttonStyle,
           darkModeEnabled: data.darkModeEnabled ?? existing.darkModeEnabled,
           customCss: data.customCss !== undefined ? data.customCss : existing.customCss,
-          publishedAt: new Date(), // Instant public site sync
+          publishedAt: new Date(),
         },
       });
     }
@@ -116,12 +126,12 @@ export class ThemeService {
         isActive: true,
         publishedAt: new Date(),
         agencyId,
-        authorId: userId,
+        authorId,
       },
     });
   }
 
-  async publishTheme(userId: string) {
+  async publishTheme(userId?: string) {
     const agencyId = await this.getOrCreateAgencyId(userId);
 
     const theme = await this.prisma.themeConfig.findFirst({

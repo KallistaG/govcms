@@ -71,10 +71,10 @@ export default function NotionBlockBuilderPage() {
   const [editingBlock, setEditingBlock] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (initialBlocks.length > 0 && blocks.length === 0) {
+    if (initialBlocks.length > 0 && !hasChanges) {
       setBlocks(initialBlocks);
     }
-  }, [initialBlocks, blocks.length]);
+  }, [initialBlocks, hasChanges]);
 
   const updateBlocks = (next: PageBlock[]) => {
     const reordered = next.map((b: PageBlock, i: number) => ({ ...b, order: i }));

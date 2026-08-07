@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeader } from '../lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+const HOMEPAGE_STORAGE_KEY = 'govcms_homepage_sections';
+const PAGE_BLOCKS_STORAGE_PREFIX = 'govcms_page_blocks_';
 
 // ─── Type Definitions ─────────────────────────────────────────────────────────
 
@@ -28,7 +30,7 @@ export interface PageBlock {
   config: Record<string, unknown>;
 }
 
-// ─── Default Sections & Blocks ────────────────────────────────────────────────
+// ─── Default Meta ─────────────────────────────────────────────────────────────
 
 export const SECTION_TYPE_META: Record<SectionType, { label: string; description: string; icon: string }> = {
   hero: { label: 'Hero Banner', description: 'Full-width banner with headline, subtext and CTA', icon: 'Sparkles' },
@@ -61,9 +63,9 @@ export const BLOCK_TYPE_META: Record<BlockType, { label: string; description: st
   hero: { label: 'Hero Banner', description: 'Full-width hero block', icon: 'Sparkles' },
 };
 
-// ─── Demo In-Memory State ─────────────────────────────────────────────────────
+// ─── Default In-Memory Fallbacks ──────────────────────────────────────────────
 
-let demoSections: HomepageSection[] = [
+const DEFAULT_SECTIONS: HomepageSection[] = [
   { id: 'sec-1', type: 'hero', title: 'Agency Hero Banner', order: 0, isVisible: true, config: { headline: 'Department of Information and Communications Technology', subtext: 'Empowering Filipinos through innovative ICT solutions', ctaLabel: 'Learn More', ctaUrl: '/about' } },
   { id: 'sec-2', type: 'news', title: 'Latest Press Releases', order: 1, isVisible: true, config: { count: 6 } },
   { id: 'sec-3', type: 'cards', title: 'Government Services', order: 2, isVisible: true, config: { columns: 3 } },
@@ -72,7 +74,7 @@ let demoSections: HomepageSection[] = [
   { id: 'sec-6', type: 'footer', title: 'Footer', order: 5, isVisible: true, config: {} },
 ];
 
-let demoBlocks: PageBlock[] = [
+const DEFAULT_BLOCKS: PageBlock[] = [
   { id: 'blk-1', type: 'hero', order: 0, collapsed: false, config: { headline: 'About Our Agency', subtext: 'Learn about our mandate, mission and vision' } },
   { id: 'blk-2', type: 'heading', order: 1, collapsed: false, config: { level: 2, text: 'Our Mission and Vision' } },
   { id: 'blk-3', type: 'paragraph', order: 2, collapsed: false, config: { text: 'To empower every Filipino through innovative, accessible, and transformative information and communications technology services.' } },
@@ -81,6 +83,50 @@ let demoBlocks: PageBlock[] = [
   { id: 'blk-6', type: 'table', order: 5, collapsed: false, config: { headers: ['Region', 'Office', 'Contact'], rows: [['NCR', 'Main Office', '(02) 1234-5678'], ['Region IV', 'Calabarzon Branch', '(049) 876-5432']] } },
   { id: 'blk-7', type: 'button', order: 6, collapsed: false, config: { label: 'Download Annual Report', url: '/downloads/annual-report-2025.pdf', variant: 'primary' } },
 ];
+
+function getLocalHomepage(): HomepageSection[] {
+  if (typeof window === 'undefined') return DEFAULT_SECTIONS;
+  try {
+    const raw = localStorage.getItem(HOMEPAGE_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // fallback
+  }
+  return DEFAULT_SECTIONS;
+}
+
+function saveLocalHomepage(sections: HomepageSection[]): HomepageSection[] {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(HOMEPAGE_STORAGE_KEY, JSON.stringify(sections));
+    } catch {
+      // fallback
+    }
+  }
+  return sections;
+}
+
+function getLocalPageBlocks(slug: string): PageBlock[] {
+  if (typeof window === 'undefined') return DEFAULT_BLOCKS;
+  try {
+    const raw = localStorage.getItem(`${PAGE_BLOCKS_STORAGE_PREFIX}${slug}`);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // fallback
+  }
+  return DEFAULT_BLOCKS;
+}
+
+function saveLocalPageBlocks(slug: string, blocks: PageBlock[]): PageBlock[] {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(`${PAGE_BLOCKS_STORAGE_PREFIX}${slug}`, JSON.stringify(blocks));
+    } catch {
+      // fallback
+    }
+  }
+  return blocks;
+}
 
 // ─── Homepage Section Hooks ───────────────────────────────────────────────────
 
@@ -92,10 +138,15 @@ export function useHomepageSections() {
         const res = await fetch(`${API_URL}/page-builder/homepage`, { headers: getAuthHeader() });
         if (res.ok) {
           const data = await res.json();
-          if (data && data.sections) return data.sections;
+          if (data && data.sections) {
+            saveLocalHomepage(data.sections);
+            return data.sections;
+          }
         }
-      } catch { /* fallback */ }
-      return [...demoSections];
+      } catch {
+        // fallback
+      }
+      return getLocalHomepage();
     },
   });
 }
@@ -104,18 +155,29 @@ export function useSaveHomepageSections() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (sections: HomepageSection[]) => {
-      demoSections = sections;
+      saveLocalHomepage(sections);
       try {
         const res = await fetch(`${API_URL}/page-builder/homepage/sections`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
           body: JSON.stringify({ sections }),
         });
-        if (res.ok) return await res.json();
-      } catch { /* fallback */ }
-      return { message: 'Saved' };
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.sections) {
+            saveLocalHomepage(data.sections);
+            return data;
+          }
+        }
+      } catch {
+        // fallback
+      }
+      return { message: 'Saved', sections };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['homepage-sections'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['homepage-sections'] });
+      qc.invalidateQueries({ queryKey: ['public-homepage'] });
+    },
   });
 }
 
@@ -129,10 +191,15 @@ export function usePublishHomepage() {
           headers: getAuthHeader(),
         });
         if (res.ok) return await res.json();
-      } catch { /* fallback */ }
+      } catch {
+        // fallback
+      }
       return { message: 'Published' };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['homepage-sections'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['homepage-sections'] });
+      qc.invalidateQueries({ queryKey: ['public-homepage'] });
+    },
   });
 }
 
@@ -146,10 +213,15 @@ export function usePageBlocks(slug: string) {
         const res = await fetch(`${API_URL}/page-builder/pages/${slug}`, { headers: getAuthHeader() });
         if (res.ok) {
           const data = await res.json();
-          if (data && data.blocks) return data.blocks;
+          if (data && data.blocks) {
+            saveLocalPageBlocks(slug, data.blocks);
+            return data.blocks;
+          }
         }
-      } catch { /* fallback */ }
-      return [...demoBlocks];
+      } catch {
+        // fallback
+      }
+      return getLocalPageBlocks(slug);
     },
   });
 }
@@ -158,18 +230,29 @@ export function useSavePageBlocks() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ slug, title, blocks }: { slug: string; title: string; blocks: PageBlock[] }) => {
-      demoBlocks = blocks;
+      saveLocalPageBlocks(slug, blocks);
       try {
         const res = await fetch(`${API_URL}/page-builder/pages/${slug}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
           body: JSON.stringify({ title, blocks }),
         });
-        if (res.ok) return await res.json();
-      } catch { /* fallback */ }
-      return { message: 'Saved' };
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.blocks) {
+            saveLocalPageBlocks(slug, data.blocks);
+            return data;
+          }
+        }
+      } catch {
+        // fallback
+      }
+      return { message: 'Saved', blocks };
     },
-    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ['page-blocks', vars.slug] }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['page-blocks', vars.slug] });
+      qc.invalidateQueries({ queryKey: ['public-page-blocks', vars.slug] });
+    },
   });
 }
 
@@ -183,9 +266,14 @@ export function usePublishPage() {
           headers: getAuthHeader(),
         });
         if (res.ok) return await res.json();
-      } catch { /* fallback */ }
+      } catch {
+        // fallback
+      }
       return { message: 'Published' };
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['page-blocks'] }),
+    onSuccess: (_d, slug) => {
+      qc.invalidateQueries({ queryKey: ['page-blocks', slug] });
+      qc.invalidateQueries({ queryKey: ['public-page-blocks', slug] });
+    },
   });
 }
