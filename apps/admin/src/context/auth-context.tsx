@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { UserProfile, UserRole } from '../types/auth';
+import { UserProfile } from '../types/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
 const ACCESS_TOKEN_KEY = 'govcms_access_token';
@@ -27,15 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
   const refreshTimerRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  const getStorage = (isRemembered?: boolean): Storage => {
-    if (typeof window === 'undefined') return {} as Storage;
-    if (isRemembered !== undefined) {
-      return isRemembered ? localStorage : sessionStorage;
-    }
-    const remembered = localStorage.getItem(REMEMBER_KEY) === 'true';
-    return remembered ? localStorage : sessionStorage;
-  };
 
   const getTokens = () => {
     if (typeof window === 'undefined') return { accessToken: null, refreshToken: null };
@@ -72,7 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const scheduleTokenRefresh = React.useCallback((expiresInSeconds: number) => {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    // Refresh 2 minutes before expiration
     const refreshDelayMs = Math.max((expiresInSeconds - 120) * 1000, 10000);
     refreshTimerRef.current = setTimeout(() => {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -110,7 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [scheduleTokenRefresh]);
 
-  // Restore Session on Initial Mount
   React.useEffect(() => {
     const initializeAuth = async () => {
       setIsLoading(true);
@@ -130,7 +119,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(profile);
           scheduleTokenRefresh(900);
         } else {
-          // Access token might be expired, attempt silent refresh
           await handleSilentRefresh();
         }
       } catch {
@@ -172,8 +160,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       scheduleTokenRefresh(data.expiresIn || 900);
       setIsLoading(false);
       return true;
-    } catch (err: any) {
-      setError(err.message || 'Unable to connect to government authentication service');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unable to connect to government authentication service';
+      setError(errorMessage);
       setIsLoading(false);
       return false;
     }

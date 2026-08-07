@@ -81,8 +81,9 @@ export default function LoginPage() {
     try {
       const res = await forgotPassword(forgotEmail);
       setForgotResult(res);
-    } catch (err: any) {
-      setForgotResult({ message: err.message || 'Error requesting reset link' });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error requesting reset link';
+      setForgotResult({ message: msg });
     } finally {
       setForgotSubmitting(false);
     }

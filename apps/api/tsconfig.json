@@ -3,7 +3,7 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
-    "declaration": false,
+    "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -12,6 +12,10 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
+    "paths": {
+      "@govcms/database": ["../../packages/database/src/index.ts"],
+      "@govcms/database/*": ["../../packages/database/src/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "noEmit": false

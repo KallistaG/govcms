@@ -23,7 +23,9 @@
     "paths": {
       "@/*": ["./src/*"],
       "@govcms/ui": ["../../packages/ui/src/index.ts"],
-      "@govcms/ui/*": ["../../packages/ui/src/*"]
+      "@govcms/ui/*": ["../../packages/ui/src/*"],
+      "@govcms/database": ["../../packages/database/src/index.ts"],
+      "@govcms/database/*": ["../../packages/database/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
