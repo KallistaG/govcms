@@ -44,6 +44,8 @@ model Agency {
 
   users        User[]
   contentItems ContentItem[]
+  mediaFolders MediaFolder[]
+  mediaAssets  MediaAsset[]
 
   @@map("agencies")
 }
@@ -68,6 +70,8 @@ model User {
   auditLogs           AuditLog[]
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  createdFolders      MediaFolder[]        @relation("FolderCreator")
+  uploadedAssets      MediaAsset[]         @relation("AssetUploader")
 
   @@map("users")
 }
@@ -125,11 +129,56 @@ model ContentItem {
   @@map("content_items")
 }
 
+model MediaFolder {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String
+  parentId    String?
+  agencyId    String
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  parent      MediaFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    MediaFolder[] @relation("FolderHierarchy")
+  agency      Agency        @relation(fields: [agencyId], references: [id])
+  createdBy   User          @relation("FolderCreator", fields: [createdById], references: [id])
+  assets      MediaAsset[]
+
+  @@unique([agencyId, parentId, slug])
+  @@map("media_folders")
+}
+
+model MediaAsset {
+  id           String       @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  thumbnailUrl String?
+  dimensions   String?      // e.g. "1920x1080"
+  altText      String?
+  caption      String?
+  isOptimized  Boolean      @default(true)
+  folderId     String?
+  agencyId     String
+  uploadedById String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  folder       MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  agency       Agency       @relation(fields: [agencyId], references: [id])
+  uploadedBy   User         @relation("AssetUploader", fields: [uploadedById], references: [id])
+
+  @@map("media_assets")
+}
+
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
-  action     String   // e.g. "LOGIN", "CREATE_CONTENT", "BULK_PUBLISH", "SOFT_DELETE"
-  entityType String   // e.g. "ContentItem", "User", "Auth"
+  action     String   // e.g. "LOGIN", "CREATE_CONTENT", "UPLOAD_MEDIA", "DELETE_MEDIA"
+  entityType String   // e.g. "ContentItem", "MediaAsset", "User"
   entityId   String?
   metadata   Json?
   ipAddress  String?
