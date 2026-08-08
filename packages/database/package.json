@@ -5,12 +5,12 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "prisma generate && tsc",
-    "postinstall": "prisma generate",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:seed": "ts-node src/seed.ts"
+    "build": "npx prisma generate && npx tsc",
+    "postinstall": "npx prisma generate",
+    "db:generate": "npx prisma generate",
+    "db:push": "npx prisma db push",
+    "db:studio": "npx prisma studio",
+    "db:seed": "npx ts-node src/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.1"

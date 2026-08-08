@@ -47,7 +47,7 @@ export interface MenuItem {
 const defaultMenuTree: MenuItem[] = [
   {
     title: 'Dashboard',
-    href: '/dashboard',
+    href: '/admin/dashboard',
     icon: LayoutDashboard,
   },
   {
@@ -55,56 +55,56 @@ const defaultMenuTree: MenuItem[] = [
     icon: Sparkles,
     badge: 'New',
     children: [
-      { title: 'Homepage Builder', href: '/page-builder/homepage' },
-      { title: 'Notion Block Builder', href: '/page-builder/notion-blocks' },
+      { title: 'Homepage Builder', href: '/admin/page-builder/homepage' },
+      { title: 'Custom Pages', href: '/admin/pages' },
     ],
   },
   {
     title: 'Content',
-    href: '/content',
+    href: '/admin/news',
     icon: FileText,
     badge: 'CMS',
     children: [
-      { title: 'All Content Items', href: '/content' },
+      { title: 'All Content Items', href: '/admin/news' },
     ],
   },
   {
     title: 'Media Library',
-    href: '/media',
+    href: '/admin/media',
     icon: FolderOpen,
     children: [
-      { title: 'Media Asset Library', href: '/media' },
+      { title: 'Media Asset Library', href: '/admin/media' },
     ],
   },
   {
     title: 'Menu Builder',
-    href: '/menus',
+    href: '/admin/menus',
     icon: MenuIcon,
     children: [
-      { title: 'Navigation Menus', href: '/menus' },
+      { title: 'Navigation Menus', href: '/admin/menus' },
     ],
   },
   {
     title: 'Users & Access',
-    href: '/users',
+    href: '/admin/users',
     icon: UsersIcon,
     children: [
-      { title: 'User Management', href: '/users' },
+      { title: 'User Management', href: '/admin/users' },
     ],
   },
   {
     title: 'Settings & Theme',
     icon: Settings,
     children: [
-      { title: 'Website Settings', href: '/settings/general' },
-      { title: 'Theme Manager', href: '/settings/theme' },
+      { title: 'Website Settings', href: '/admin/settings/general' },
+      { title: 'Theme Manager', href: '/admin/settings/theme' },
     ],
   },
   {
     title: 'Reports & Logs',
     icon: BarChart3,
     children: [
-      { title: 'Audit Trail Logs', href: '/reports/audit-logs' },
+      { title: 'Audit Trail Logs', href: '/admin/reports/audit-logs' },
     ],
   },
 ];
