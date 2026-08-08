@@ -12,6 +12,10 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   role: UserRole;
+  department?: string | null;
+  phone?: string | null;
+  avatarUrl?: string | null;
+  permissions?: string[] | string | null;
   agency?: UserAgency | null;
 }
 
