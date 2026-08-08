@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { getWebsiteSettings, prisma } from '@govcms/database';
 import {
   Globe,
@@ -98,9 +99,35 @@ async function getPublicMenu(locationInput: string) {
   return { location, items: [] };
 }
 
+async function getPublicWebsiteSettings() {
+  let dbSettings: any = null;
+  try {
+    dbSettings = await getWebsiteSettings();
+  } catch {
+    // fallback
+  }
+
+  try {
+    const cookieStore = await cookies();
+    const cookieRaw = cookieStore.get('govcms_website_settings')?.value;
+    if (cookieRaw) {
+      const parsed = JSON.parse(decodeURIComponent(cookieRaw));
+      return { ...dbSettings, ...parsed };
+    }
+  } catch {
+    // fallback
+  }
+
+  return dbSettings || {
+    siteName: 'La Carlota City Water District',
+    websiteName: 'La Carlota City Water District',
+    maintenanceMode: false,
+  };
+}
+
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const [settings, theme, headerMenu, footerMenu] = await Promise.all([
-    getWebsiteSettings(),
+    getPublicWebsiteSettings(),
     getPublicTheme(),
     getPublicMenu('HEADER'),
     getPublicMenu('FOOTER'),
