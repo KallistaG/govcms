@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   userName = 'Admin User',
   userEmail = 'admin@gov.ph',
   userRole = 'SUPER_ADMIN',
-  agencyName = 'Department of Information & Communications Technology',
+  agencyName = 'Government Agency Portal',
   userAvatarUrl,
   onLogout,
 }) => {
