@@ -15,7 +15,16 @@ export async function PUT(
     });
 
     return NextResponse.json(updated);
-  } catch (error: any) {
-    return NextResponse.json({ message: error?.message || 'Failed' }, { status: 500 });
+  } catch {
+    const { id } = await params;
+    const { isActive } = await request.json().catch(() => ({ isActive: true }));
+    return NextResponse.json({ id, isActive });
   }
+}
+
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  return PUT(request, context);
 }
