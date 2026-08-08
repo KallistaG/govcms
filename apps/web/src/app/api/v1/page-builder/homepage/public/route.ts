@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@govcms/database';
+import { prisma, getWebsiteSettings } from '@govcms/database';
 
 export async function GET() {
   try {
@@ -7,23 +7,30 @@ export async function GET() {
       where: { isDraft: false },
       orderBy: { updatedAt: 'desc' },
     });
+
     if (config?.sections) {
       const sections = typeof config.sections === 'string' ? JSON.parse(config.sections) : config.sections;
       return NextResponse.json(sections);
     }
-  } catch {
-    // fallback
-  }
 
-  return NextResponse.json([
-    {
-      id: 'sec-hero-1',
-      type: 'hero',
-      title: 'Department of Information & Communications Technology',
-      subtitle: 'Official Enterprise Web Portal Engine of the Republic of the Philippines',
-      order: 0,
-      isVisible: true,
-      config: {},
-    },
-  ]);
+    const settings = await getWebsiteSettings();
+
+    return NextResponse.json([
+      {
+        id: 'sec-hero-1',
+        type: 'hero',
+        title: settings.siteName || 'La Carlota City Water District',
+        subtitle: settings.tagline || 'Providing safe, adequate, safe and potable water supply affordable to all.',
+        order: 0,
+        isVisible: true,
+        config: {},
+      },
+    ]);
+  } catch (error) {
+    console.error('[API_ERROR] GET /api/v1/page-builder/homepage/public:', error);
+    return NextResponse.json(
+      { message: 'Failed to retrieve published homepage sections' },
+      { status: 500 }
+    );
+  }
 }
