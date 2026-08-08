@@ -49,6 +49,37 @@ const globalStore = globalThis as unknown as {
   __govcms_website_settings?: WebsiteSettingsDTO;
 };
 
+export async function createDefaultWebsiteSettings(): Promise<WebsiteSettingsDTO> {
+  const created = await prisma.websiteSettings.create({
+    data: {
+      siteName: DEFAULT_WEBSITE_SETTINGS.siteName || 'La Carlota City Water District',
+      tagline: DEFAULT_WEBSITE_SETTINGS.tagline || '',
+      seoTitle: DEFAULT_WEBSITE_SETTINGS.seoTitle || '',
+      seoDescription: DEFAULT_WEBSITE_SETTINGS.seoDescription || '',
+      keywords: DEFAULT_WEBSITE_SETTINGS.keywords || '',
+      primaryColor: DEFAULT_WEBSITE_SETTINGS.primaryColor || '#1d4ed8',
+      secondaryColor: DEFAULT_WEBSITE_SETTINGS.secondaryColor || '#7c3aed',
+      email: DEFAULT_WEBSITE_SETTINGS.email || '',
+      phone: DEFAULT_WEBSITE_SETTINGS.phone || '',
+      address: DEFAULT_WEBSITE_SETTINGS.address || '',
+      googleMaps: DEFAULT_WEBSITE_SETTINGS.googleMaps || '',
+      facebook: DEFAULT_WEBSITE_SETTINGS.facebook || '',
+      maintenanceMode: DEFAULT_WEBSITE_SETTINGS.maintenanceMode || false,
+      maintenanceMessage: DEFAULT_WEBSITE_SETTINGS.maintenanceMessage || '',
+    },
+  });
+
+  const result: any = {
+    ...created,
+    websiteName: created.siteName,
+    description: created.tagline || created.seoDescription || '',
+    googleMapsUrl: created.googleMaps || '',
+  };
+
+  globalStore.__govcms_website_settings = result;
+  return result;
+}
+
 export async function getWebsiteSettings(): Promise<WebsiteSettingsDTO> {
   try {
     let settings = await prisma.websiteSettings.findFirst({
@@ -56,24 +87,11 @@ export async function getWebsiteSettings(): Promise<WebsiteSettingsDTO> {
     });
 
     if (!settings) {
-      settings = await prisma.websiteSettings.create({
-        data: {
-          siteName: DEFAULT_WEBSITE_SETTINGS.siteName || 'La Carlota City Water District',
-          tagline: DEFAULT_WEBSITE_SETTINGS.tagline || '',
-          seoTitle: DEFAULT_WEBSITE_SETTINGS.seoTitle || '',
-          seoDescription: DEFAULT_WEBSITE_SETTINGS.seoDescription || '',
-          keywords: DEFAULT_WEBSITE_SETTINGS.keywords || '',
-          primaryColor: DEFAULT_WEBSITE_SETTINGS.primaryColor || '#1d4ed8',
-          secondaryColor: DEFAULT_WEBSITE_SETTINGS.secondaryColor || '#7c3aed',
-          email: DEFAULT_WEBSITE_SETTINGS.email || '',
-          phone: DEFAULT_WEBSITE_SETTINGS.phone || '',
-          address: DEFAULT_WEBSITE_SETTINGS.address || '',
-          googleMaps: DEFAULT_WEBSITE_SETTINGS.googleMaps || '',
-          facebook: DEFAULT_WEBSITE_SETTINGS.facebook || '',
-          maintenanceMode: DEFAULT_WEBSITE_SETTINGS.maintenanceMode || false,
-          maintenanceMessage: DEFAULT_WEBSITE_SETTINGS.maintenanceMessage || '',
-        },
-      }).catch(() => null);
+      try {
+        settings = (await createDefaultWebsiteSettings()) as any;
+      } catch {
+        // DB uninitialized or fallback
+      }
     }
 
     if (settings) {
@@ -86,8 +104,10 @@ export async function getWebsiteSettings(): Promise<WebsiteSettingsDTO> {
       globalStore.__govcms_website_settings = result;
       return result;
     }
-  } catch {
-    // DB not connected or error
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DATABASE_ERROR] getWebsiteSettings failed:', error);
+    }
   }
 
   return globalStore.__govcms_website_settings || DEFAULT_WEBSITE_SETTINGS;
@@ -185,8 +205,10 @@ export async function updateWebsiteSettings(data: WebsiteSettingsDTO): Promise<W
       globalStore.__govcms_website_settings = result;
       return result;
     }
-  } catch {
-    // DB offline - return merged memory store
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('[DATABASE_ERROR] updateWebsiteSettings failed:', error);
+    }
   }
 
   return merged;
