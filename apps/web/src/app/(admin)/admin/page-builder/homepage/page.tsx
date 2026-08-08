@@ -9,6 +9,7 @@ import {
   SectionType,
   SECTION_TYPE_META,
 } from '../../../../../hooks/use-page-builder';
+import { useSiteSettings } from '../../../../../hooks/use-site-settings';
 import {
   Sparkles,
   Images,
@@ -28,6 +29,13 @@ import {
   GripVertical,
   Send,
   Save,
+  Monitor,
+  Tablet,
+  Smartphone,
+  X,
+  Globe,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -46,12 +54,15 @@ const SECTION_ICON_MAP: Record<string, React.ComponentType<{ className?: string 
 
 export default function HomepageBuilderPage() {
   const { data: initialSections = [], isLoading } = useHomepageSections();
+  const { data: siteSettings } = useSiteSettings();
   const saveMutation = useSaveHomepageSections();
   const publishMutation = usePublishHomepage();
 
   const [sections, setSections] = React.useState<HomepageSection[]>([]);
   const [hasChanges, setHasChanges] = React.useState(false);
   const [showAddPanel, setShowAddPanel] = React.useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
+  const [viewport, setViewport] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   React.useEffect(() => {
     if (initialSections.length > 0 && !hasChanges) {
@@ -114,6 +125,8 @@ export default function HomepageBuilderPage() {
     toast.success('Homepage changes live published to public website portal!');
   };
 
+  const siteName = siteSettings?.siteName || siteSettings?.websiteName || 'La Carlota City Water District';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
@@ -127,11 +140,14 @@ export default function HomepageBuilderPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={!hasChanges} className="gap-1">
+          <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} className="gap-1 font-bold text-xs">
+            <Eye className="h-4 w-4 text-primary" /> Live Preview
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleSave} disabled={!hasChanges} className="gap-1 font-semibold text-xs">
             <Save className="h-4 w-4" /> Save Draft
           </Button>
-          <Button size="sm" onClick={handlePublish} className="font-bold gap-1 shadow-xs bg-emerald-600 hover:bg-emerald-700">
-            <Send className="h-4 w-4" /> Publish Live to Website
+          <Button size="sm" onClick={handlePublish} className="font-bold gap-1 shadow-xs bg-emerald-600 hover:bg-emerald-700 text-xs">
+            <Send className="h-4 w-4" /> Publish Live
           </Button>
         </div>
       </div>
@@ -270,8 +286,11 @@ export default function HomepageBuilderPage() {
                   {hasChanges ? 'Yes (Draft)' : 'None (Synced)'}
                 </span>
               </div>
-              <div className="pt-2">
-                <Button className="w-full font-bold text-xs" onClick={handlePublish}>
+              <div className="pt-2 space-y-2">
+                <Button variant="outline" className="w-full font-bold text-xs gap-1" onClick={() => setIsPreviewOpen(true)}>
+                  <Eye className="h-4 w-4 text-primary" /> Open Live Preview
+                </Button>
+                <Button className="w-full font-bold text-xs bg-emerald-600 hover:bg-emerald-700" onClick={handlePublish}>
                   Publish Live Configuration
                 </Button>
               </div>
@@ -279,6 +298,207 @@ export default function HomepageBuilderPage() {
           </Card>
         </div>
       </div>
+
+      {/* Live Preview Modal */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-between animate-in fade-in-50">
+          {/* Header Controls */}
+          <div className="bg-slate-900 border-b border-slate-800 text-white px-6 py-3 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-5 w-5 text-amber-400" />
+              <span className="font-bold text-sm">Live Website Homepage Preview</span>
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 text-[10px]">
+                Interactive Render Mode
+              </Badge>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Viewport Toggles */}
+              <div className="flex items-center border border-slate-700 rounded-lg p-1 bg-slate-950">
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    viewport === 'desktop' ? 'bg-primary text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
+                  onClick={() => setViewport('desktop')}
+                >
+                  <Monitor className="h-3.5 w-3.5" /> Desktop
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    viewport === 'tablet' ? 'bg-primary text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
+                  onClick={() => setViewport('tablet')}
+                >
+                  <Tablet className="h-3.5 w-3.5" /> Tablet
+                </button>
+                <button
+                  type="button"
+                  className={`px-3 py-1 rounded text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                    viewport === 'mobile' ? 'bg-primary text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  }`}
+                  onClick={() => setViewport('mobile')}
+                >
+                  <Smartphone className="h-3.5 w-3.5" /> Mobile
+                </button>
+              </div>
+
+              <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => setIsPreviewOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Preview Viewport Container */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-950/60">
+            <div
+              className={`bg-background text-foreground shadow-2xl rounded-2xl border transition-all duration-300 flex flex-col ${
+                viewport === 'desktop'
+                  ? 'w-full max-w-6xl min-h-[700px]'
+                  : viewport === 'tablet'
+                  ? 'w-[768px] min-h-[700px]'
+                  : 'w-[380px] min-h-[700px]'
+              }`}
+            >
+              {/* Top Banner */}
+              {siteSettings?.maintenanceMode && (
+                <div className="bg-amber-600 text-white px-4 py-2 text-xs font-bold text-center flex items-center justify-center gap-2">
+                  <AlertTriangle className="h-4 w-4 animate-bounce" />
+                  <span>Scheduled System Maintenance Active</span>
+                </div>
+              )}
+
+              <div className="bg-slate-950 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800 flex items-center justify-between">
+                <span className="font-bold text-amber-400">Republic of the Philippines</span>
+                <span className="font-mono text-[10px]">PST Official</span>
+              </div>
+
+              {/* Website Header */}
+              <header className="border-b bg-card px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                    <Globe className="h-4 w-4" />
+                  </div>
+                  <span className="font-black text-sm text-foreground tracking-tight">{siteName}</span>
+                </div>
+                <nav className="hidden sm:flex items-center gap-3 text-xs font-semibold text-muted-foreground">
+                  <span className="text-primary font-bold">Home</span>
+                  <span>News & Press</span>
+                  <span>Services</span>
+                  <span>Downloads</span>
+                </nav>
+              </header>
+
+              {/* Dynamic Section Renders */}
+              <div className="p-6 space-y-8 flex-1">
+                {sections
+                  .filter((s) => s.isVisible)
+                  .map((sec) => (
+                    <div key={sec.id} className="space-y-4 border p-6 rounded-2xl bg-card shadow-2xs relative">
+                      <Badge className="absolute top-3 right-3 text-[9px] uppercase font-mono bg-primary/10 text-primary border-primary/20">
+                        {sec.type}
+                      </Badge>
+
+                      {sec.type === 'hero' && (
+                        <div className="text-center py-8 space-y-4 max-w-2xl mx-auto">
+                          <Badge variant="outline" className="text-xs border-primary/30 text-primary bg-primary/5">
+                            Official Agency Web Portal
+                          </Badge>
+                          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground leading-tight">
+                            {(sec.config?.headline as string) || siteName}
+                          </h2>
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                            {(sec.config?.subtext as string) || siteSettings?.tagline || 'Providing safe, adequate, potable water supply affordable to all.'}
+                          </p>
+                          <div className="pt-2 flex justify-center gap-3">
+                            <Button className="font-bold text-xs px-6 shadow-md">Explore Services</Button>
+                            <Button variant="outline" className="font-bold text-xs px-6">Read Press Releases</Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'news' && (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                            <Newspaper className="h-5 w-5 text-primary" /> Latest Agency News & Releases
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {[1, 2, 3].map((n) => (
+                              <div key={n} className="border rounded-xl p-4 bg-background space-y-2 hover:border-primary/50 transition-colors">
+                                <Badge variant="secondary" className="text-[10px]">Official Notice #{n}</Badge>
+                                <h4 className="font-bold text-xs text-foreground line-clamp-2">
+                                  Scheduled Service Maintenance and System Upgrade Advisory
+                                </h4>
+                                <p className="text-[11px] text-muted-foreground line-clamp-2">
+                                  Official advisory issued regarding upcoming infrastructure enhancements.
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'cards' && (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                            <LayoutGrid className="h-5 w-5 text-primary" /> Public Services & E-Services
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {[
+                              { title: 'FOI Downloads', desc: 'Access public freedom of information records.' },
+                              { title: 'Public Advisories', desc: 'Read latest announcements and circulars.' },
+                              { title: 'Citizen Charter', desc: 'Service guidelines and official procedures.' },
+                            ].map((card, idx) => (
+                              <div key={idx} className="border p-4 rounded-xl bg-background space-y-2">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                                <h4 className="font-bold text-xs text-foreground">{card.title}</h4>
+                                <p className="text-[11px] text-muted-foreground">{card.desc}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {sec.type === 'statistics' && (
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 text-center">
+                          {[
+                            { label: 'Active Connections', val: '45,200+' },
+                            { label: 'Satisfaction Rate', val: '99.4%' },
+                            { label: 'Service Coverage', val: '100%' },
+                            { label: 'Support Desk', val: '24/7' },
+                          ].map((st, idx) => (
+                            <div key={idx} className="p-3 border rounded-xl bg-background">
+                              <span className="font-black text-xl text-primary font-mono">{st.val}</span>
+                              <p className="text-[10px] text-muted-foreground font-semibold uppercase">{st.label}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {sec.type !== 'hero' && sec.type !== 'news' && sec.type !== 'cards' && sec.type !== 'statistics' && (
+                        <div className="py-6 text-center text-xs text-muted-foreground space-y-1">
+                          <h3 className="font-bold text-foreground">{sec.title}</h3>
+                          <p>Interactive preview rendered for {sec.type} section component.</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+
+              {/* Website Footer Preview */}
+              <footer className="bg-slate-950 text-slate-400 p-6 border-t border-slate-800 text-xs space-y-2">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Globe className="h-4 w-4 text-primary" /> {siteName}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  © 2026 Republic of the Philippines. Official Agency Web Platform.
+                </p>
+              </footer>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

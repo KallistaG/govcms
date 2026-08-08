@@ -15,6 +15,11 @@ import {
   Building2,
   Phone,
   MapPin,
+  Eye,
+  X,
+  AlertTriangle,
+  Monitor,
+  CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -35,6 +40,7 @@ export default function GeneralSettingsPage() {
 
   const [settings, setSettings] = React.useState<SiteSettingsData | null>(null);
   const [hasChanges, setHasChanges] = React.useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (initialSettings && !settings) {
@@ -72,6 +78,8 @@ export default function GeneralSettingsPage() {
     );
   }
 
+  const siteName = settings.siteName || settings.websiteName || 'La Carlota City Water District';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-5">
@@ -84,9 +92,14 @@ export default function GeneralSettingsPage() {
           </p>
         </div>
 
-        <Button onClick={handleSave} disabled={!hasChanges} className="font-bold gap-1 shadow-xs">
-          <Save className="h-4 w-4" /> Save Settings to PostgreSQL
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsPreviewOpen(true)} className="font-bold text-xs gap-1">
+            <Eye className="h-4 w-4 text-primary" /> Live Website Preview
+          </Button>
+          <Button onClick={handleSave} disabled={!hasChanges} className="font-bold text-xs gap-1 shadow-xs">
+            <Save className="h-4 w-4" /> Save Settings
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -98,46 +111,32 @@ export default function GeneralSettingsPage() {
                 <Building2 className="h-5 w-5 text-primary" /> Agency Identity & Site Name
               </CardTitle>
               <CardDescription className="text-xs">
-                Main site name and tagline displayed on public navigation and header footer components.
+                Official name and tagline displayed on public layout headers, metadata, and footer branding.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="siteName">Official Site / Agency Name</Label>
+            <CardContent className="pt-5 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="siteName" className="font-bold text-xs">
+                  Official Site / Agency Name
+                </Label>
                 <Input
                   id="siteName"
                   value={settings.siteName || settings.websiteName || ''}
                   onChange={(e) => update('siteName', e.target.value)}
-                  required
+                  placeholder="e.g. La Carlota City Water District"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="tagline">Agency Motto / Tagline</Label>
+              <div className="space-y-2">
+                <Label htmlFor="tagline" className="font-bold text-xs">
+                  Agency Tagline / Mission Statement
+                </Label>
                 <Input
                   id="tagline"
                   value={settings.tagline || settings.description || ''}
                   onChange={(e) => update('tagline', e.target.value)}
+                  placeholder="e.g. Providing safe, adequate, safe and potable water supply affordable to all."
                 />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="seoTitle">SEO Title Tag</Label>
-                  <Input
-                    id="seoTitle"
-                    value={settings.seoTitle || ''}
-                    onChange={(e) => update('seoTitle', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="keywords">SEO Keywords (Comma Separated)</Label>
-                  <Input
-                    id="keywords"
-                    value={settings.keywords || ''}
-                    onChange={(e) => update('keywords', e.target.value)}
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -146,16 +145,18 @@ export default function GeneralSettingsPage() {
           <Card>
             <CardHeader className="border-b pb-4">
               <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Mail className="h-5 w-5 text-blue-500" /> Public Contact Information
+                <Mail className="h-5 w-5 text-primary" /> Official Contact Information
               </CardTitle>
               <CardDescription className="text-xs">
-                Official contact channels published on portal footer and public contact directory.
+                Public helpline, official email, physical address, and map location desk.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="pt-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Official Agency Email</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="font-bold text-xs flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" /> Official Email Address
+                  </Label>
                   <Input
                     id="email"
                     type="email"
@@ -163,8 +164,11 @@ export default function GeneralSettingsPage() {
                     onChange={(e) => update('email', e.target.value)}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone">Hotline / Phone Number</Label>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="font-bold text-xs flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" /> Official Hotline / Telephone
+                  </Label>
                   <Input
                     id="phone"
                     value={settings.phone || ''}
@@ -173,95 +177,192 @@ export default function GeneralSettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="address">Physical Agency Address</Label>
+              <div className="space-y-2">
+                <Label htmlFor="address" className="font-bold text-xs flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Physical Office Address
+                </Label>
                 <Input
                   id="address"
                   value={settings.address || ''}
                   onChange={(e) => update('address', e.target.value)}
                 />
               </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="googleMaps">Google Maps Embed Embed URL</Label>
-                <Input
-                  id="googleMaps"
-                  value={settings.googleMaps || settings.googleMapsUrl || ''}
-                  onChange={(e) => update('googleMaps', e.target.value)}
-                />
-              </div>
             </CardContent>
           </Card>
 
-          {/* Social Links */}
-          <Card>
+          {/* Maintenance Mode */}
+          <Card className={settings.maintenanceMode ? 'border-2 border-amber-500 bg-amber-50/20' : ''}>
             <CardHeader className="border-b pb-4">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Share2 className="h-5 w-5 text-purple-500" /> Social Media Channels
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="facebook">Facebook Page URL</Label>
-                  <Input
-                    id="facebook"
-                    value={settings.facebook || ''}
-                    onChange={(e) => update('facebook', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="twitter">X / Twitter URL</Label>
-                  <Input
-                    id="twitter"
-                    value={settings.twitter || ''}
-                    onChange={(e) => update('twitter', e.target.value)}
-                  />
-                </div>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-amber-600">
+                  <AlertOctagon className="h-5 w-5" /> Portal Maintenance Mode
+                </CardTitle>
+                <Badge variant={settings.maintenanceMode ? 'destructive' : 'outline'} className="font-mono text-[10px]">
+                  {settings.maintenanceMode ? 'MAINTENANCE ACTIVE' : 'LIVE ONLINE'}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar Maintenance & Status Panel */}
-        <div className="space-y-6">
-          <Card className="border-amber-500/30 bg-amber-500/5">
-            <CardHeader className="border-b border-amber-500/20 pb-4">
-              <CardTitle className="text-base font-bold flex items-center gap-2 text-amber-600 dark:text-amber-400">
-                <AlertOctagon className="h-5 w-5" /> Maintenance Mode Controls
-              </CardTitle>
               <CardDescription className="text-xs">
-                Enable to temporarily restrict public access during scheduled portal maintenance.
+                Toggle maintenance mode to display warning banners across all public portal pages.
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="maintenanceMode" className="font-bold text-xs cursor-pointer">
-                  Maintenance Mode Active
-                </Label>
+            <CardContent className="pt-5 space-y-4">
+              <div className="flex items-center justify-between border p-4 rounded-xl bg-card">
+                <div className="space-y-0.5">
+                  <span className="font-bold text-sm text-foreground">Activate Portal Maintenance Mode</span>
+                  <p className="text-xs text-muted-foreground">
+                    Display notice banner on public layout header and restrict non-admin access.
+                  </p>
+                </div>
                 <input
-                  id="maintenanceMode"
                   type="checkbox"
-                  className="h-5 w-5 rounded accent-amber-500 cursor-pointer"
-                  checked={settings.maintenanceMode}
+                  checked={settings.maintenanceMode || false}
                   onChange={(e) => update('maintenanceMode', e.target.checked)}
+                  className="h-5 w-5 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
                 />
               </div>
 
               {settings.maintenanceMode && (
-                <div className="space-y-1.5 pt-2">
-                  <Label htmlFor="maintenanceMessage">Public Notice Message</Label>
+                <div className="space-y-2 animate-in fade-in-50">
+                  <Label htmlFor="maintenanceMessage" className="font-bold text-xs text-amber-800">
+                    Custom Maintenance Banner Message
+                  </Label>
                   <Input
                     id="maintenanceMessage"
                     value={settings.maintenanceMessage || ''}
                     onChange={(e) => update('maintenanceMessage', e.target.value)}
+                    placeholder="e.g. The official agency portal is currently undergoing scheduled maintenance."
                   />
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
+
+        {/* Status Side Panel */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-bold">Settings Sync Overview</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              <div className="flex justify-between py-1 border-b">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant="outline" className="text-[10px] text-emerald-600 bg-emerald-50 border-emerald-200">
+                  Configured
+                </Badge>
+              </div>
+              <div className="flex justify-between py-1 border-b">
+                <span className="text-muted-foreground">Unsaved Edits</span>
+                <span className={`font-bold font-mono ${hasChanges ? 'text-amber-500' : 'text-emerald-500'}`}>
+                  {hasChanges ? 'Yes' : 'No'}
+                </span>
+              </div>
+              <div className="pt-2 space-y-2">
+                <Button variant="outline" className="w-full font-bold text-xs gap-1" onClick={() => setIsPreviewOpen(true)}>
+                  <Eye className="h-4 w-4 text-primary" /> Preview Live Layout
+                </Button>
+                <Button className="w-full font-bold text-xs" onClick={handleSave} disabled={!hasChanges}>
+                  Save Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* Live Preview Modal */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-between animate-in fade-in-50">
+          <div className="bg-slate-900 border-b border-slate-800 text-white px-6 py-3 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <Globe className="h-5 w-5 text-primary" />
+              <span className="font-bold text-sm">Live Website Settings Preview</span>
+            </div>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800" onClick={() => setIsPreviewOpen(false)}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-950/60">
+            <div className="w-full max-w-5xl bg-background text-foreground shadow-2xl rounded-2xl border flex flex-col min-h-[600px]">
+              {/* Maintenance Banner */}
+              {settings.maintenanceMode && (
+                <div className="bg-amber-600 text-white px-4 py-3 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md">
+                  <AlertTriangle className="h-4 w-4 animate-bounce shrink-0" />
+                  <span>{settings.maintenanceMessage || 'System Maintenance in progress.'}</span>
+                </div>
+              )}
+
+              {/* PST Bar */}
+              <div className="bg-slate-950 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800 flex items-center justify-between">
+                <span className="font-bold text-amber-400 uppercase tracking-wider">Republic of the Philippines</span>
+                <span className="font-mono text-[10px]">PST Official</span>
+              </div>
+
+              {/* Header */}
+              <header className="border-b bg-card px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                    <Globe className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-black text-base text-foreground tracking-tight">{siteName}</h2>
+                    <p className="text-[11px] text-muted-foreground font-semibold">GOV.PH Official Web Platform</p>
+                  </div>
+                </div>
+                <nav className="hidden sm:flex items-center gap-4 text-xs font-bold text-muted-foreground">
+                  <span className="text-primary">Home</span>
+                  <span>News</span>
+                  <span>FOI Downloads</span>
+                  <span>Services</span>
+                </nav>
+              </header>
+
+              {/* Main Content Preview */}
+              <div className="p-8 space-y-6 flex-1 max-w-3xl mx-auto text-center flex flex-col items-center justify-center">
+                <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5 px-3 py-1">
+                  Official Public Portal Preview
+                </Badge>
+
+                <h1 className="text-3xl font-black text-foreground tracking-tight">{siteName}</h1>
+                <p className="text-sm text-muted-foreground max-w-xl leading-relaxed">
+                  {settings.tagline || 'Providing safe, adequate, safe and potable water supply affordable to all.'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full pt-6 text-left">
+                  <div className="border p-4 rounded-xl bg-card space-y-1">
+                    <Mail className="h-4 w-4 text-primary" />
+                    <span className="font-bold text-xs block text-foreground">Official Email</span>
+                    <p className="text-[11px] text-muted-foreground font-mono">{settings.email || 'info@lacarlotawater.gov.ph'}</p>
+                  </div>
+
+                  <div className="border p-4 rounded-xl bg-card space-y-1">
+                    <Phone className="h-4 w-4 text-primary" />
+                    <span className="font-bold text-xs block text-foreground">Official Hotline</span>
+                    <p className="text-[11px] text-muted-foreground font-mono">{settings.phone || '+63 (034) 460-2234'}</p>
+                  </div>
+
+                  <div className="border p-4 rounded-xl bg-card space-y-1">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <span className="font-bold text-xs block text-foreground">Office Address</span>
+                    <p className="text-[11px] text-muted-foreground line-clamp-2">{settings.address || 'Gurrea St., La Carlota City'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Preview */}
+              <footer className="bg-slate-950 text-slate-400 p-6 border-t border-slate-800 text-xs flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Globe className="h-4 w-4 text-primary" /> {siteName}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  © 2026 Republic of the Philippines. All rights reserved.
+                </p>
+              </footer>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
