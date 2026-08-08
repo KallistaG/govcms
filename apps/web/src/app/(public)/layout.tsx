@@ -128,9 +128,13 @@ export default async function PublicLayout({ children }: { children: React.React
       </a>
 
       {settings.maintenanceMode && (
-        <div className="bg-amber-600 text-white px-4 py-2.5 text-xs font-bold text-center flex items-center justify-center gap-2 shadow-md">
-          <AlertTriangle className="h-4 w-4 shrink-0 animate-bounce" />
-          <span>{settings.maintenanceMessage || 'System Maintenance in progress.'}</span>
+        <div className="bg-amber-600 text-white px-4 py-3 text-xs font-bold text-center flex flex-col sm:flex-row items-center justify-center gap-2 shadow-md z-50 sticky top-0">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0 animate-bounce" />
+            <span className="uppercase tracking-wider">Scheduled System Maintenance Active</span>
+          </div>
+          <span className="hidden sm:inline">•</span>
+          <span className="font-medium text-amber-100">{settings.maintenanceMessage || 'The official agency portal is currently undergoing scheduled system maintenance.'}</span>
         </div>
       )}
 
@@ -149,7 +153,7 @@ export default async function PublicLayout({ children }: { children: React.React
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3 group">
             {settings.logo ? (
-              <img src={settings.logo} alt={settings.siteName} className="h-10 w-auto object-contain" />
+              <img src={settings.logo} alt={settings.siteName || settings.websiteName || 'Agency Logo'} className="h-10 w-auto object-contain" />
             ) : (
               <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 group-hover:scale-105 transition-transform">
                 <Globe className="h-5 w-5" />
@@ -157,7 +161,7 @@ export default async function PublicLayout({ children }: { children: React.React
             )}
             <div className="flex flex-col">
               <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
-                {settings.siteName}
+                {settings.siteName || settings.websiteName || 'La Carlota City Water District'}
               </span>
               <span className="text-[10px] text-muted-foreground font-semibold">
                 GOV.PH Official Web Platform
@@ -223,7 +227,7 @@ export default async function PublicLayout({ children }: { children: React.React
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
                 <Globe className="h-5 w-5 text-primary" />
-                <span>{settings.siteName}</span>
+                <span>{settings.siteName || settings.websiteName || 'La Carlota City Water District'}</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 {settings.tagline || settings.seoDescription}

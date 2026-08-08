@@ -44,7 +44,12 @@ export default function GeneralSettingsPage() {
 
   const update = (key: keyof SiteSettingsData, value: unknown) => {
     if (!settings) return;
-    setSettings({ ...settings, [key]: value } as SiteSettingsData);
+    const next: any = { ...settings, [key]: value };
+    if (key === 'siteName') next.websiteName = value;
+    if (key === 'websiteName') next.siteName = value;
+    if (key === 'tagline') next.description = value;
+    if (key === 'description') next.tagline = value;
+    setSettings(next as SiteSettingsData);
     setHasChanges(true);
   };
 
@@ -53,7 +58,7 @@ export default function GeneralSettingsPage() {
     try {
       await updateMutation.mutateAsync(settings);
       setHasChanges(false);
-      toast.success('Website Settings successfully persisted to PostgreSQL database!');
+      toast.success('Website Settings updated successfully!');
     } catch {
       toast.error('Failed to update settings');
     }

@@ -2,48 +2,54 @@ import { prisma } from './client';
 
 export interface WebsiteSettingsDTO {
   id?: string;
-  siteName?: string;
-  tagline?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  keywords?: string;
+  siteName?: string | null;
+  websiteName?: string | null;
+  tagline?: string | null;
+  description?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  keywords?: string | null;
   logo?: string | null;
   favicon?: string | null;
-  primaryColor?: string;
-  secondaryColor?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  googleMaps?: string;
-  facebook?: string;
-  twitter?: string;
-  youtube?: string;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  googleMaps?: string | null;
+  googleMapsUrl?: string | null;
+  facebook?: string | null;
+  twitter?: string | null;
+  youtube?: string | null;
   maintenanceMode?: boolean;
-  maintenanceMessage?: string;
+  maintenanceMessage?: string | null;
 }
 
-export const DEFAULT_WEBSITE_SETTINGS: Required<Omit<WebsiteSettingsDTO, 'id' | 'logo' | 'favicon' | 'twitter' | 'youtube'>> & { logo: string | null; favicon: string | null; twitter: string | null; youtube: string | null } = {
+export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettingsDTO = {
   siteName: 'La Carlota City Water District',
+  websiteName: 'La Carlota City Water District',
   tagline: 'Providing safe, adequate, safe and potable water supply affordable to all.',
+  description: 'Providing safe, adequate, safe and potable water supply affordable to all.',
   seoTitle: 'La Carlota City Water District | Official Portal',
   seoDescription: 'Providing safe, adequate, safe and potable water supply affordable to all.',
   keywords: 'govcms, philippines, dict, government, public services, water district',
-  logo: null,
-  favicon: null,
   primaryColor: '#1d4ed8',
   secondaryColor: '#7c3aed',
   email: 'info@lacarlotawater.gov.ph',
   phone: '+63 (034) 460-2234',
   address: 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
   googleMaps: 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed',
+  googleMapsUrl: 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed',
   facebook: 'https://facebook.com/LaCarlotaCityWaterDistrict',
-  twitter: null,
-  youtube: null,
   maintenanceMode: false,
   maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance. Please check back shortly.',
 };
 
-export async function getWebsiteSettings() {
+const globalStore = globalThis as unknown as {
+  __govcms_website_settings?: WebsiteSettingsDTO;
+};
+
+export async function getWebsiteSettings(): Promise<WebsiteSettingsDTO> {
   try {
     let settings = await prisma.websiteSettings.findFirst({
       orderBy: { updatedAt: 'desc' },
@@ -51,73 +57,137 @@ export async function getWebsiteSettings() {
 
     if (!settings) {
       settings = await prisma.websiteSettings.create({
-        data: DEFAULT_WEBSITE_SETTINGS,
-      });
+        data: {
+          siteName: DEFAULT_WEBSITE_SETTINGS.siteName || 'La Carlota City Water District',
+          tagline: DEFAULT_WEBSITE_SETTINGS.tagline || '',
+          seoTitle: DEFAULT_WEBSITE_SETTINGS.seoTitle || '',
+          seoDescription: DEFAULT_WEBSITE_SETTINGS.seoDescription || '',
+          keywords: DEFAULT_WEBSITE_SETTINGS.keywords || '',
+          primaryColor: DEFAULT_WEBSITE_SETTINGS.primaryColor || '#1d4ed8',
+          secondaryColor: DEFAULT_WEBSITE_SETTINGS.secondaryColor || '#7c3aed',
+          email: DEFAULT_WEBSITE_SETTINGS.email || '',
+          phone: DEFAULT_WEBSITE_SETTINGS.phone || '',
+          address: DEFAULT_WEBSITE_SETTINGS.address || '',
+          googleMaps: DEFAULT_WEBSITE_SETTINGS.googleMaps || '',
+          facebook: DEFAULT_WEBSITE_SETTINGS.facebook || '',
+          maintenanceMode: DEFAULT_WEBSITE_SETTINGS.maintenanceMode || false,
+          maintenanceMessage: DEFAULT_WEBSITE_SETTINGS.maintenanceMessage || '',
+        },
+      }).catch(() => null);
     }
 
-    return settings;
-  } catch (error) {
-    console.error('[getWebsiteSettings] Database query error:', error);
-    return DEFAULT_WEBSITE_SETTINGS;
+    if (settings) {
+      const result: any = {
+        ...settings,
+        websiteName: settings.siteName,
+        description: settings.tagline || settings.seoDescription || '',
+        googleMapsUrl: settings.googleMaps || '',
+      };
+      globalStore.__govcms_website_settings = result;
+      return result;
+    }
+  } catch {
+    // DB not connected or error
   }
+
+  return globalStore.__govcms_website_settings || DEFAULT_WEBSITE_SETTINGS;
 }
 
-export async function updateWebsiteSettings(data: WebsiteSettingsDTO) {
+export async function updateWebsiteSettings(data: WebsiteSettingsDTO): Promise<WebsiteSettingsDTO> {
+  const current = globalStore.__govcms_website_settings || DEFAULT_WEBSITE_SETTINGS;
+  const newSiteName = data.siteName || data.websiteName || current.siteName || 'La Carlota City Water District';
+  const newTagline = data.tagline || data.description || current.tagline || '';
+
+  const merged: WebsiteSettingsDTO = {
+    ...current,
+    ...data,
+    siteName: newSiteName,
+    websiteName: newSiteName,
+    tagline: newTagline,
+    description: newTagline,
+    seoTitle: data.seoTitle || newSiteName,
+    seoDescription: data.seoDescription || newTagline,
+    keywords: data.keywords !== undefined ? data.keywords : current.keywords,
+    email: data.email !== undefined ? data.email : current.email,
+    phone: data.phone !== undefined ? data.phone : current.phone,
+    address: data.address !== undefined ? data.address : current.address,
+    googleMaps: data.googleMaps || data.googleMapsUrl || current.googleMaps,
+    googleMapsUrl: data.googleMaps || data.googleMapsUrl || current.googleMapsUrl,
+    facebook: data.facebook !== undefined ? data.facebook : current.facebook,
+    maintenanceMode: data.maintenanceMode !== undefined ? Boolean(data.maintenanceMode) : current.maintenanceMode,
+    maintenanceMessage: data.maintenanceMessage !== undefined ? data.maintenanceMessage : current.maintenanceMessage,
+  };
+
+  globalStore.__govcms_website_settings = merged;
+
   try {
     let settings = await prisma.websiteSettings.findFirst({
       orderBy: { updatedAt: 'desc' },
     });
 
     if (settings) {
-      return await prisma.websiteSettings.update({
+      const updated = await prisma.websiteSettings.update({
         where: { id: settings.id },
         data: {
-          siteName: data.siteName ?? settings.siteName,
-          tagline: data.tagline ?? settings.tagline,
-          seoTitle: data.seoTitle ?? settings.seoTitle,
-          seoDescription: data.seoDescription ?? settings.seoDescription,
-          keywords: data.keywords ?? settings.keywords,
-          logo: data.logo !== undefined ? data.logo : settings.logo,
-          favicon: data.favicon !== undefined ? data.favicon : settings.favicon,
-          primaryColor: data.primaryColor ?? settings.primaryColor,
-          secondaryColor: data.secondaryColor ?? settings.secondaryColor,
-          email: data.email ?? settings.email,
-          phone: data.phone ?? settings.phone,
-          address: data.address ?? settings.address,
-          googleMaps: data.googleMaps ?? settings.googleMaps,
-          facebook: data.facebook ?? settings.facebook,
-          twitter: data.twitter ?? settings.twitter,
-          youtube: data.youtube ?? settings.youtube,
-          maintenanceMode: data.maintenanceMode !== undefined ? data.maintenanceMode : settings.maintenanceMode,
-          maintenanceMessage: data.maintenanceMessage ?? settings.maintenanceMessage,
+          siteName: merged.siteName || 'La Carlota City Water District',
+          tagline: merged.tagline || '',
+          seoTitle: merged.seoTitle || '',
+          seoDescription: merged.seoDescription || '',
+          keywords: merged.keywords || '',
+          logo: merged.logo || undefined,
+          favicon: merged.favicon || undefined,
+          primaryColor: merged.primaryColor || '#1d4ed8',
+          secondaryColor: merged.secondaryColor || '#7c3aed',
+          email: merged.email || '',
+          phone: merged.phone || '',
+          address: merged.address || '',
+          googleMaps: merged.googleMaps || '',
+          facebook: merged.facebook || '',
+          twitter: merged.twitter || undefined,
+          youtube: merged.youtube || undefined,
+          maintenanceMode: Boolean(merged.maintenanceMode),
+          maintenanceMessage: merged.maintenanceMessage || '',
         },
       });
+      const result: any = {
+        ...updated,
+        websiteName: updated.siteName,
+        description: updated.tagline || updated.seoDescription || '',
+        googleMapsUrl: updated.googleMaps || '',
+      };
+      globalStore.__govcms_website_settings = result;
+      return result;
+    } else {
+      const created = await prisma.websiteSettings.create({
+        data: {
+          siteName: merged.siteName || 'La Carlota City Water District',
+          tagline: merged.tagline || '',
+          seoTitle: merged.seoTitle || '',
+          seoDescription: merged.seoDescription || '',
+          keywords: merged.keywords || '',
+          primaryColor: merged.primaryColor || '#1d4ed8',
+          secondaryColor: merged.secondaryColor || '#7c3aed',
+          email: merged.email || '',
+          phone: merged.phone || '',
+          address: merged.address || '',
+          googleMaps: merged.googleMaps || '',
+          facebook: merged.facebook || '',
+          maintenanceMode: Boolean(merged.maintenanceMode),
+          maintenanceMessage: merged.maintenanceMessage || '',
+        },
+      });
+      const result: any = {
+        ...created,
+        websiteName: created.siteName,
+        description: created.tagline || created.seoDescription || '',
+        googleMapsUrl: created.googleMaps || '',
+      };
+      globalStore.__govcms_website_settings = result;
+      return result;
     }
-
-    return await prisma.websiteSettings.create({
-      data: {
-        siteName: data.siteName || DEFAULT_WEBSITE_SETTINGS.siteName,
-        tagline: data.tagline || DEFAULT_WEBSITE_SETTINGS.tagline,
-        seoTitle: data.seoTitle || DEFAULT_WEBSITE_SETTINGS.seoTitle,
-        seoDescription: data.seoDescription || DEFAULT_WEBSITE_SETTINGS.seoDescription,
-        keywords: data.keywords || DEFAULT_WEBSITE_SETTINGS.keywords,
-        logo: data.logo || null,
-        favicon: data.favicon || null,
-        primaryColor: data.primaryColor || DEFAULT_WEBSITE_SETTINGS.primaryColor,
-        secondaryColor: data.secondaryColor || DEFAULT_WEBSITE_SETTINGS.secondaryColor,
-        email: data.email || DEFAULT_WEBSITE_SETTINGS.email,
-        phone: data.phone || DEFAULT_WEBSITE_SETTINGS.phone,
-        address: data.address || DEFAULT_WEBSITE_SETTINGS.address,
-        googleMaps: data.googleMaps || DEFAULT_WEBSITE_SETTINGS.googleMaps,
-        facebook: data.facebook || DEFAULT_WEBSITE_SETTINGS.facebook,
-        twitter: data.twitter || null,
-        youtube: data.youtube || null,
-        maintenanceMode: data.maintenanceMode || false,
-        maintenanceMessage: data.maintenanceMessage || DEFAULT_WEBSITE_SETTINGS.maintenanceMessage,
-      },
-    });
-  } catch (error) {
-    console.error('[updateWebsiteSettings] Database update error:', error);
-    return { ...DEFAULT_WEBSITE_SETTINGS, ...data };
+  } catch {
+    // DB offline - return merged memory store
   }
+
+  return merged;
 }
