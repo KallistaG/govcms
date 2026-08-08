@@ -12,22 +12,10 @@ export async function GET(
       include: { author: { select: { firstName: true, lastName: true, email: true } } },
     });
     if (item) return NextResponse.json({ ...item, isPublished: item.status === 'PUBLISHED' });
-  } catch {
-    // fallback
+    return NextResponse.json({ message: 'Content item not found' }, { status: 404 });
+  } catch (error: any) {
+    return NextResponse.json({ message: error?.message || 'Content item not found' }, { status: 404 });
   }
-
-  const { id } = await params;
-  return NextResponse.json({
-    id,
-    title: 'Sample Government Press Release',
-    slug: 'sample-government-press-release',
-    type: 'PRESS_RELEASE',
-    status: 'PUBLISHED',
-    isPublished: true,
-    summary: 'Official updates from the department.',
-    body: 'Content details...',
-    createdAt: new Date().toISOString(),
-  });
 }
 
 export async function PUT(
@@ -50,10 +38,8 @@ export async function PUT(
     });
 
     return NextResponse.json({ ...updated, isPublished: updated.status === 'PUBLISHED' });
-  } catch {
-    const { id } = await params;
-    const body = await request.json().catch(() => ({}));
-    return NextResponse.json({ ...body, id, isPublished: true });
+  } catch (error: any) {
+    return NextResponse.json({ message: error?.message || 'Failed to update content item' }, { status: 500 });
   }
 }
 
@@ -70,9 +56,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    await prisma.contentItem.delete({ where: { id } }).catch(() => {});
-    return NextResponse.json({ message: 'Deleted' });
-  } catch {
-    return NextResponse.json({ message: 'Deleted' });
+    await prisma.contentItem.delete({ where: { id } });
+    return NextResponse.json({ message: 'Deleted content item successfully' });
+  } catch (error: any) {
+    return NextResponse.json({ message: error?.message || 'Failed to delete content item' }, { status: 500 });
   }
 }

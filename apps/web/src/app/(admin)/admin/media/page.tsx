@@ -62,7 +62,11 @@ export default function MediaLibraryPage() {
 
   const { data: folders } = useMediaFolders();
   const createFolderMutation = useCreateMediaFolder();
-  const { data: assets, isLoading } = useMediaAssets(currentFolderId, search, mimeGroup !== 'all' ? mimeGroup : undefined);
+  const { data: assets, isLoading } = useMediaAssets({
+    folderId: currentFolderId,
+    search,
+    mimeType: mimeGroup !== 'all' ? mimeGroup : undefined,
+  });
   const uploadMutation = useUploadMediaAsset();
   const updateMutation = useUpdateMediaAsset();
   const deleteMutation = useDeleteMediaAsset();
@@ -340,7 +344,10 @@ export default function MediaLibraryPage() {
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onUpload={async (data) => {
-          await uploadMutation.mutateAsync({ file: new File([], data.filename), folderId: data.folderId, altText: data.altText });
+          const fd = new FormData();
+          if (data.folderId) fd.append('folderId', data.folderId);
+          if (data.altText) fd.append('altText', data.altText);
+          await uploadMutation.mutateAsync(fd);
         }}
         currentFolderId={currentFolderId}
       />

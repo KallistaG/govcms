@@ -26,17 +26,6 @@ export async function GET(request: Request) {
     });
     return NextResponse.json(logs);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'log-1',
-        action: 'PUBLISH',
-        entityType: 'ContentItem',
-        entityId: 'cnt-1',
-        ipAddress: '192.168.1.100',
-        browser: 'Chrome 120 / Windows 11',
-        createdAt: new Date().toISOString(),
-        user: { firstName: 'Maria', lastName: 'Santos', email: 'maria.santos@dict.gov.ph' },
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }

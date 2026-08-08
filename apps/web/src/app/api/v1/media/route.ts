@@ -33,19 +33,7 @@ export async function GET(request: Request) {
     }));
     return NextResponse.json(formatted);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'med-1',
-        filename: 'National_Digital_Infrastructure_Roadmap.pdf',
-        originalName: 'National_Digital_Infrastructure_Roadmap.pdf',
-        mimeType: 'application/pdf',
-        size: 3450000,
-        url: '/files/National_Digital_Infrastructure_Roadmap.pdf',
-        altText: 'National Digital Infrastructure Roadmap Document',
-        uploadedByName: 'Maria Santos',
-        createdAt: new Date().toISOString(),
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }
 
@@ -59,10 +47,27 @@ export async function POST(request: Request) {
     const filename = file ? file.name : `asset-${Date.now()}.png`;
     const mimeType = file ? file.type : 'image/png';
     const size = file ? file.size : 1024 * 500;
-    const url = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&auto=format&fit=crop';
+    const url = '/uploads/' + filename;
 
-    const user = await prisma.user.findFirst();
-    const agency = await prisma.agency.findFirst();
+    let user = await prisma.user.findFirst();
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: 'admin@gov.ph',
+          passwordHash: '',
+          firstName: 'Agency',
+          lastName: 'Administrator',
+          role: 'ADMINISTRATOR',
+        },
+      });
+    }
+
+    let agency = await prisma.agency.findFirst();
+    if (!agency) {
+      agency = await prisma.agency.create({
+        data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
+      });
+    }
 
     const created = await prisma.mediaAsset.create({
       data: {
@@ -73,8 +78,8 @@ export async function POST(request: Request) {
         url,
         altText: altText || filename,
         folderId: folderId || null,
-        uploadedById: user?.id || 'demo-user',
-        agencyId: agency?.id || 'demo-agency',
+        uploadedById: user.id,
+        agencyId: agency.id,
       },
     });
 

@@ -19,15 +19,6 @@ export async function GET() {
     }));
     return NextResponse.json(formatted);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'n1',
-        title: 'DICT Launches Enterprise Cloud Infrastructure for Regional Government Units',
-        slug: 'dict-launches-enterprise-cloud-infrastructure',
-        status: 'PUBLISHED',
-        author: 'Maria Santos',
-        date: new Date().toISOString(),
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }

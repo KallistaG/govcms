@@ -28,48 +28,6 @@ export interface AuditLogData {
   } | null;
 }
 
-const INITIAL_DEMO_LOGS: AuditLogData[] = [
-  {
-    id: 'log-101',
-    userId: 'usr-1',
-    action: 'PUBLISH',
-    entityType: 'ContentItem',
-    entityId: 'cnt-881',
-    status: 'SUCCESS',
-    ipAddress: '112.198.102.45',
-    browser: 'Chrome 120',
-    device: 'Desktop (Windows)',
-    createdAt: new Date(Date.now() - 300000).toISOString(),
-    user: { id: 'usr-1', email: 'admin@dict.gov.ph', firstName: 'Kallista', lastName: 'G', role: 'SUPER_ADMIN', department: 'Executive Office' },
-  },
-  {
-    id: 'log-102',
-    userId: 'usr-2',
-    action: 'LOGIN',
-    entityType: 'User',
-    entityId: 'usr-2',
-    status: 'SUCCESS',
-    ipAddress: '120.28.188.12',
-    browser: 'Firefox 121',
-    device: 'Desktop (macOS)',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-    user: { id: 'usr-2', email: 'maria.santos@dict.gov.ph', firstName: 'Maria', lastName: 'Santos', role: 'ADMINISTRATOR', department: 'IT & Digital Services' },
-  },
-  {
-    id: 'log-103',
-    userId: 'usr-3',
-    action: 'CREATE',
-    entityType: 'MediaAsset',
-    entityId: 'asset-442',
-    status: 'SUCCESS',
-    ipAddress: '180.191.80.99',
-    browser: 'Chrome 120',
-    device: 'Desktop (Windows)',
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-    user: { id: 'usr-3', email: 'juan.delacruz@dict.gov.ph', firstName: 'Juan', lastName: 'Dela Cruz', role: 'EDITOR', department: 'Public Information Office' },
-  },
-];
-
 export function useAuditLogs(search?: string, action?: string, entityType?: string) {
   return useQuery({
     queryKey: ['audit-logs', search, action, entityType],
@@ -85,22 +43,10 @@ export function useAuditLogs(search?: string, action?: string, entityType?: stri
         });
         if (res.ok) return await res.json();
       } catch {
-        // Fallback demo filtering
+        // Fallback
       }
 
-      return INITIAL_DEMO_LOGS.filter((log) => {
-        const matchesSearch =
-          !search ||
-          log.action.toLowerCase().includes(search.toLowerCase()) ||
-          log.entityType.toLowerCase().includes(search.toLowerCase()) ||
-          (log.ipAddress && log.ipAddress.includes(search)) ||
-          (log.user && log.user.email.toLowerCase().includes(search.toLowerCase()));
-
-        const matchesAction = !action || action === 'ALL' || log.action === action;
-        const matchesEntity = !entityType || entityType === 'ALL' || log.entityType === entityType;
-
-        return matchesSearch && matchesAction && matchesEntity;
-      });
+      return [];
     },
   });
 }
@@ -132,8 +78,8 @@ export function downloadAuditLogsCsv(logs: AuditLogData[]) {
     log.entityId || 'N/A',
     log.status || 'SUCCESS',
     log.ipAddress || '127.0.0.1',
-    log.browser || 'Chrome 120',
-    log.device || 'Desktop (Windows)',
+    log.browser || 'N/A',
+    log.device || 'N/A',
   ]);
 
   const csvContent =

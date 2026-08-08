@@ -45,25 +45,13 @@ export async function GET(request: Request) {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit) || 1,
+        totalPages: Math.ceil(total / limit) || 0,
       },
     });
-  } catch {
+  } catch (error: any) {
     return NextResponse.json({
-      data: [
-        {
-          id: 'cnt-1',
-          title: 'DICT Launches Enterprise Cloud Infrastructure for Regional Government Units',
-          slug: 'dict-launches-enterprise-cloud-infrastructure',
-          type: 'PRESS_RELEASE',
-          status: 'PUBLISHED',
-          isPublished: true,
-          summary: 'Accelerating digital transformation across local government units with secure cloud hosting services.',
-          createdAt: new Date().toISOString(),
-          author: { firstName: 'Maria', lastName: 'Santos', email: 'maria.santos@dict.gov.ph' },
-        },
-      ],
-      meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      data: [],
+      meta: { page: 1, limit, total: 0, totalPages: 0 },
     });
   }
 }
@@ -73,8 +61,29 @@ export async function POST(request: Request) {
     const body = await request.json();
     const slug = body.slug || body.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || `item-${Date.now()}`;
 
-    const author = await prisma.user.findFirst();
-    const agency = await prisma.agency.findFirst();
+    let author = await prisma.user.findFirst();
+    if (!author) {
+      author = await prisma.user.create({
+        data: {
+          email: 'admin@gov.ph',
+          passwordHash: '',
+          firstName: 'Agency',
+          lastName: 'Administrator',
+          role: 'ADMINISTRATOR',
+        },
+      });
+    }
+
+    let agency = await prisma.agency.findFirst();
+    if (!agency) {
+      agency = await prisma.agency.create({
+        data: {
+          name: 'La Carlota City Water District',
+          code: 'LCCWD',
+          slug: 'lccwd',
+        },
+      });
+    }
 
     const created = await prisma.contentItem.create({
       data: {
@@ -84,8 +93,8 @@ export async function POST(request: Request) {
         body: body.body || '',
         summary: body.summary || '',
         status: body.isPublished || body.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
-        authorId: author?.id || 'demo-author',
-        agencyId: agency?.id || 'demo-agency',
+        authorId: author.id,
+        agencyId: agency.id,
       },
     });
 

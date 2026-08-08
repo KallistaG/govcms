@@ -28,77 +28,6 @@ export interface MenuData {
   tree?: MenuItemData[];
 }
 
-const INITIAL_DEMO_MENUS: Record<string, MenuItemData[]> = {
-  HEADER_MENU: [
-    {
-      id: 'm-1',
-      menuId: 'menu-header',
-      title: 'Home',
-      url: '/',
-      icon: 'Home',
-      order: 0,
-      isVisible: true,
-      children: [],
-    },
-    {
-      id: 'm-2',
-      menuId: 'menu-header',
-      title: 'About Agency',
-      url: '/pages/about',
-      icon: 'Building2',
-      order: 1,
-      isVisible: true,
-      children: [],
-    },
-    {
-      id: 'm-3',
-      menuId: 'menu-header',
-      title: 'News & Press',
-      url: '/news',
-      icon: 'Newspaper',
-      order: 2,
-      isVisible: true,
-      children: [],
-    },
-    {
-      id: 'm-4',
-      menuId: 'menu-header',
-      title: 'FOI Downloads',
-      url: '/downloads',
-      icon: 'Download',
-      order: 3,
-      isVisible: true,
-      children: [],
-    },
-  ],
-  FOOTER_MENU: [
-    {
-      id: 'm-f1',
-      menuId: 'menu-footer',
-      title: 'GOV.PH Portal',
-      url: 'https://www.gov.ph',
-      isExternal: true,
-      openInNewTab: true,
-      order: 0,
-      isVisible: true,
-      children: [],
-    },
-    {
-      id: 'm-f2',
-      menuId: 'menu-footer',
-      title: 'DICT Main',
-      url: 'https://dict.gov.ph',
-      isExternal: true,
-      openInNewTab: true,
-      order: 1,
-      isVisible: true,
-      children: [],
-    },
-  ],
-};
-
-const memoryMenus = { ...INITIAL_DEMO_MENUS };
-
 export function usePublicMenu(location: 'HEADER_MENU' | 'FOOTER_MENU' | 'SIDEBAR_MENU') {
   return useQuery({
     queryKey: ['menu', 'public', location],
@@ -109,7 +38,7 @@ export function usePublicMenu(location: 'HEADER_MENU' | 'FOOTER_MENU' | 'SIDEBAR
       } catch {
         // Fallback
       }
-      return { location, items: memoryMenus[location] || [] };
+      return { location, items: [] };
     },
   });
 }
@@ -141,7 +70,7 @@ export function useMenuByLocation(location: 'HEADER_MENU' | 'FOOTER_MENU' | 'SID
         name: location.replace('_', ' '),
         code: location.toLowerCase(),
         location,
-        tree: memoryMenus[location] || [],
+        tree: [],
       };
     },
   });
@@ -152,38 +81,20 @@ export function useCreateMenuItem() {
 
   return useMutation({
     mutationFn: async (newItem: Partial<MenuItemData>) => {
-      try {
-        const res = await fetch(`${API_URL}/menus/items`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify(newItem),
-        });
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback
+      const res = await fetch(`${API_URL}/menus/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify(newItem),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to create menu item');
       }
 
-      const item: MenuItemData = {
-        id: `m-${Date.now()}`,
-        menuId: newItem.menuId || 'menu-header',
-        parentId: newItem.parentId || null,
-        title: newItem.title || 'New Item',
-        url: newItem.url || '/',
-        icon: newItem.icon,
-        isExternal: !!newItem.isExternal,
-        openInNewTab: !!newItem.openInNewTab,
-        isVisible: newItem.isVisible !== false,
-        order: newItem.order || 0,
-        children: [],
-      };
-
-      const loc = newItem.menuId?.includes('footer') ? 'FOOTER_MENU' : 'HEADER_MENU';
-      memoryMenus[loc] = memoryMenus[loc] || [];
-      memoryMenus[loc].push(item);
-      return item;
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menu'] });
@@ -196,21 +107,20 @@ export function useUpdateMenuItem() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<MenuItemData> }) => {
-      try {
-        const res = await fetch(`${API_URL}/menus/items/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify(data),
-        });
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback
+      const res = await fetch(`${API_URL}/menus/items/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update menu item');
       }
 
-      return { message: 'Menu item updated' };
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menu'] });
@@ -223,17 +133,16 @@ export function useDeleteMenuItem() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      try {
-        const res = await fetch(`${API_URL}/menus/items/${id}`, {
-          method: 'DELETE',
-          headers: getAuthHeader(),
-        });
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback
+      const res = await fetch(`${API_URL}/menus/items/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeader(),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete menu item');
       }
 
-      return { message: 'Menu item removed' };
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menu'] });

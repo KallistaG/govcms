@@ -59,44 +59,6 @@ export const BLOCK_TYPE_META: Record<BlockType, { label: string; description: st
   hero: { label: 'Page Banner', description: 'Header banner section', icon: 'Sparkles' },
 };
 
-const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
-  {
-    id: 'sec-hero-1',
-    type: 'hero',
-    title: 'Hero Banner',
-    order: 0,
-    isVisible: true,
-    config: {
-      headline: 'Official Agency Portal Engine',
-      subtext: 'Providing fast, accessible, transparent, and digital government public services to all citizens.',
-      ctaLabel: 'Read Announcements',
-      ctaUrl: '/news',
-    },
-  },
-  {
-    id: 'sec-news-1',
-    type: 'news',
-    title: 'Latest Press Releases & News',
-    order: 1,
-    isVisible: true,
-    config: { count: 3 },
-  },
-  {
-    id: 'sec-cards-1',
-    type: 'cards',
-    title: 'Public e-Services',
-    order: 2,
-    isVisible: true,
-    config: {
-      cards: [
-        { title: 'FOI Requests', description: 'Submit Freedom of Information requests online.', link: '/downloads' },
-        { title: 'Public Notices', description: 'Read official agency advisories and circulars.', link: '/news' },
-        { title: 'Agency Services', description: 'Explore public programs, permits, and guidelines.', link: '/pages/about' },
-      ],
-    },
-  },
-];
-
 export function useHomepageSections() {
   return useQuery({
     queryKey: ['page-builder', 'homepage'],
@@ -117,7 +79,7 @@ export function useHomepageSections() {
           try { return JSON.parse(saved); } catch { /* ignore */ }
         }
       }
-      return DEFAULT_HOMEPAGE_SECTIONS;
+      return [];
     },
   });
 }
@@ -198,10 +160,7 @@ export function usePageBlocks(slug: string) {
           try { return JSON.parse(saved); } catch { /* ignore */ }
         }
       }
-      return [
-        { id: 'blk-1', type: 'heading', order: 0, collapsed: false, config: { text: 'Welcome to Agency Page', level: 'h1' } },
-        { id: 'blk-2', type: 'paragraph', order: 1, collapsed: false, config: { text: 'This dynamic page content is rendered from the GovCMS Page Builder engine.' } },
-      ];
+      return [];
     },
   });
 }

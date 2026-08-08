@@ -42,15 +42,10 @@ export async function GET(
   }
 
   return NextResponse.json({
-    id: 'menu-demo',
-    name: 'Header Navigation',
+    id: `menu-${location.toLowerCase()}`,
+    name: location.replace('_', ' '),
     location,
     items: [],
-    tree: [
-      { id: '1', title: 'Home', url: '/', order: 0 },
-      { id: '2', title: 'About Us', url: '/pages/about', order: 1 },
-      { id: '3', title: 'Press Releases', url: '/news', order: 2 },
-      { id: '4', title: 'Public Downloads', url: '/downloads', order: 3 },
-    ],
+    tree: [],
   });
 }

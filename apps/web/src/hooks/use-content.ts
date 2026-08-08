@@ -33,53 +33,6 @@ export interface ContentQueryParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-const INITIAL_DEMO_ITEMS: ContentItem[] = [
-  {
-    id: 'c-1',
-    title: 'Executive Order No. 44 - National Digital Transformation Strategy',
-    slug: 'executive-order-44-digital-strategy',
-    summary: 'Directing all government departments to adopt unified e-governance standards.',
-    body: 'Full executive order text detailing digital governance protocols and agency mandates.',
-    type: 'EVENT',
-    status: 'PUBLISHED',
-    authorName: 'Super Admin',
-    agencyName: 'Department of Information & Communications Technology',
-    publishedAt: '2026-08-05',
-    createdAt: '2026-08-05T08:00:00Z',
-    updatedAt: '2026-08-05T08:00:00Z',
-  },
-  {
-    id: 'c-2',
-    title: 'DICT Announces Public Consultation on Cybersecurity Framework',
-    slug: 'public-consultation-cybersecurity-framework',
-    summary: 'Inviting public stakeholder feedback on cloud security requirements.',
-    body: 'Public notice body content providing feedback links and submission dates.',
-    type: 'PUBLIC_NOTICE',
-    status: 'PUBLISHED',
-    authorName: 'Official Publisher',
-    agencyName: 'Department of Information & Communications Technology',
-    publishedAt: '2026-08-06',
-    createdAt: '2026-08-06T09:30:00Z',
-    updatedAt: '2026-08-06T09:30:00Z',
-  },
-  {
-    id: 'c-3',
-    title: 'GovCMS Portal Engine Version 1.0 Enterprise Launch',
-    slug: 'govcms-portal-engine-launch',
-    summary: 'Introducing Next.js 15 and React 19 architecture for public service portals.',
-    body: 'Press release introducing features, accessibility compliance, and performance metrics.',
-    type: 'PRESS_RELEASE',
-    status: 'PUBLISHED',
-    authorName: 'Agency Administrator',
-    agencyName: 'Department of Information & Communications Technology',
-    publishedAt: '2026-08-07',
-    createdAt: '2026-08-07T10:00:00Z',
-    updatedAt: '2026-08-07T10:00:00Z',
-  },
-];
-
-let memoryDemoItems = [...INITIAL_DEMO_ITEMS];
-
 export function useContentList(params: ContentQueryParams = {}) {
   return useQuery({
     queryKey: ['content', 'list', params],
@@ -92,7 +45,7 @@ export function useContentList(params: ContentQueryParams = {}) {
         if (params.page) queryParams.set('page', String(params.page));
         if (params.limit) queryParams.set('limit', String(params.limit));
 
-        const res = await fetch(`${API_URL}/content?${queryParams.toString()}`, {
+        const res = await fetch(`${API_URL}/contents?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
             ...getAuthHeader(),
@@ -102,42 +55,20 @@ export function useContentList(params: ContentQueryParams = {}) {
         if (res.ok) {
           return await res.json();
         }
-        throw new Error('API query failed');
       } catch {
-        let filtered = [...memoryDemoItems];
-
-        if (params.search) {
-          const s = params.search.toLowerCase();
-          filtered = filtered.filter(
-            (i) => i.title.toLowerCase().includes(s) || i.summary?.toLowerCase().includes(s),
-          );
-        }
-
-        if (params.type) {
-          filtered = filtered.filter((i) => i.type === params.type);
-        }
-
-        if (params.status) {
-          filtered = filtered.filter((i) => i.status === params.status);
-        }
-
-        const page = params.page || 1;
-        const limit = params.limit || 10;
-        const totalItems = filtered.length;
-        const start = (page - 1) * limit;
-        const data = filtered.slice(start, start + limit);
-
-        return {
-          data,
-          meta: {
-            totalItems,
-            itemCount: data.length,
-            itemsPerPage: limit,
-            totalPages: Math.ceil(totalItems / limit) || 1,
-            currentPage: page,
-          },
-        };
+        // Fallback
       }
+
+      return {
+        data: [],
+        meta: {
+          totalItems: 0,
+          itemCount: 0,
+          itemsPerPage: params.limit || 10,
+          totalPages: 0,
+          currentPage: params.page || 1,
+        },
+      };
     },
   });
 }
@@ -147,41 +78,20 @@ export function useCreateContent() {
 
   return useMutation({
     mutationFn: async (newItem: Partial<ContentItem>) => {
-      try {
-        const res = await fetch(`${API_URL}/content`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify(newItem),
-        });
+      const res = await fetch(`${API_URL}/contents`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify(newItem),
+      });
 
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback demo creation
+      if (!res.ok) {
+        throw new Error('Failed to create content');
       }
 
-      const createdItem: ContentItem = {
-        id: `c-${Date.now()}`,
-        title: newItem.title || 'Untitled Document',
-        slug: newItem.slug || 'untitled-document',
-        summary: newItem.summary,
-        body: newItem.body || '',
-        type: newItem.type || 'PAGE_DOCUMENT',
-        status: newItem.status || 'DRAFT',
-        featuredImage: newItem.featuredImage,
-        eventDate: newItem.eventDate,
-        location: newItem.location,
-        authorName: 'Official Administrator',
-        agencyName: 'Department of Information & Communications Technology',
-        publishedAt: newItem.status === 'PUBLISHED' ? new Date().toISOString().split('T')[0] : undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      memoryDemoItems.unshift(createdItem);
-      return createdItem;
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content'] });
@@ -194,24 +104,20 @@ export function useUpdateContent() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ContentItem> }) => {
-      try {
-        const res = await fetch(`${API_URL}/content/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify(data),
-        });
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback demo update
+      const res = await fetch(`${API_URL}/contents/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update content');
       }
 
-      memoryDemoItems = memoryDemoItems.map((item) =>
-        item.id === id ? { ...item, ...data, updatedAt: new Date().toISOString() } : item,
-      );
-      return { message: 'Updated successfully' };
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content'] });
@@ -224,18 +130,16 @@ export function useDeleteContent() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      try {
-        const res = await fetch(`${API_URL}/content/${id}`, {
-          method: 'DELETE',
-          headers: getAuthHeader(),
-        });
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback demo delete
+      const res = await fetch(`${API_URL}/contents/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeader(),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete content');
       }
 
-      memoryDemoItems = memoryDemoItems.filter((i) => i.id !== id);
-      return { message: 'Soft deleted successfully' };
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content'] });
@@ -254,36 +158,21 @@ export function useBulkAction() {
       action: 'delete' | 'publish' | 'archive';
       ids: string[];
     }) => {
-      const endpoint = `${API_URL}/content/bulk-${action}`;
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify({ ids }),
-        });
-        if (res.ok) return await res.json();
-      } catch {
-        // Fallback demo bulk handler
+      const endpoint = `${API_URL}/contents/bulk`;
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify({ action, ids }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to perform bulk ${action}`);
       }
 
-      if (action === 'delete') {
-        memoryDemoItems = memoryDemoItems.filter((i) => !ids.includes(i.id));
-      } else if (action === 'publish') {
-        memoryDemoItems = memoryDemoItems.map((i) =>
-          ids.includes(i.id)
-            ? { ...i, status: 'PUBLISHED', publishedAt: new Date().toISOString().split('T')[0] }
-            : i,
-        );
-      } else if (action === 'archive') {
-        memoryDemoItems = memoryDemoItems.map((i) =>
-          ids.includes(i.id) ? { ...i, status: 'ARCHIVED' } : i,
-        );
-      }
-
-      return { message: `Bulk ${action} applied to ${ids.length} item(s)` };
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['content'] });

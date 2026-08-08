@@ -20,14 +20,6 @@ export async function GET() {
     }));
     return NextResponse.json(formatted);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'act-1',
-        user: { name: 'Maria Santos' },
-        action: 'Published press release',
-        target: 'DICT Launches Enterprise Cloud Infrastructure',
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }

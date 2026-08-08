@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
 
+async function getOrCreateAgencyAndUser() {
+  let agency = await prisma.agency.findFirst();
+  if (!agency) {
+    agency = await prisma.agency.create({
+      data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
+    });
+  }
+  let author = await prisma.user.findFirst();
+  if (!author) {
+    author = await prisma.user.create({
+      data: {
+        email: 'admin@gov.ph',
+        passwordHash: '',
+        firstName: 'Agency',
+        lastName: 'Administrator',
+        role: 'ADMINISTRATOR',
+      },
+    });
+  }
+  return { agency, author };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get('slug') || 'about';
@@ -12,21 +34,14 @@ export async function GET(request: Request) {
         const parsed = JSON.parse(item.body);
         if (Array.isArray(parsed)) return NextResponse.json(parsed);
       } catch {
-        // body was HTML string
+        // body was raw string
       }
     }
   } catch {
     // fallback
   }
 
-  return NextResponse.json([
-    {
-      id: `blk-text-1`,
-      type: 'text',
-      order: 0,
-      config: { text: `Official Agency Mandate and Overview for ${slug}` },
-    },
-  ]);
+  return NextResponse.json([]);
 }
 
 export async function POST(request: Request) {
@@ -40,8 +55,7 @@ export async function POST(request: Request) {
         data: { body: JSON.stringify(blocks) },
       });
     } else {
-      const author = await prisma.user.findFirst();
-      const agency = await prisma.agency.findFirst();
+      const { agency, author } = await getOrCreateAgencyAndUser();
       await prisma.contentItem.create({
         data: {
           title: slug.toUpperCase(),
@@ -49,8 +63,8 @@ export async function POST(request: Request) {
           type: 'PAGE_DOCUMENT',
           body: JSON.stringify(blocks),
           status: 'PUBLISHED',
-          authorId: author?.id || 'demo-author',
-          agencyId: agency?.id || 'demo-agency',
+          authorId: author.id,
+          agencyId: agency.id,
         },
       });
     }

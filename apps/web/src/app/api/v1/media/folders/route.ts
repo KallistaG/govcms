@@ -16,10 +16,7 @@ export async function GET() {
     }));
     return NextResponse.json(formatted);
   } catch {
-    return NextResponse.json([
-      { id: 'f1', name: 'Official Press Images', assetCount: 12, createdAt: new Date().toISOString() },
-      { id: 'f2', name: 'Freedom of Information (FOI)', assetCount: 8, createdAt: new Date().toISOString() },
-    ]);
+    return NextResponse.json([]);
   }
 }
 
@@ -27,20 +24,38 @@ export async function POST(request: Request) {
   try {
     const { name, parentId } = await request.json();
     const slug = name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : `folder-${Date.now()}`;
-    const agency = await prisma.agency.findFirst();
-    const user = await prisma.user.findFirst();
+
+    let agency = await prisma.agency.findFirst();
+    if (!agency) {
+      agency = await prisma.agency.create({
+        data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
+      });
+    }
+
+    let user = await prisma.user.findFirst();
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: 'admin@gov.ph',
+          passwordHash: '',
+          firstName: 'Agency',
+          lastName: 'Administrator',
+          role: 'ADMINISTRATOR',
+        },
+      });
+    }
 
     const folder = await prisma.mediaFolder.create({
       data: {
         name,
         slug,
         parentId: parentId || null,
-        agencyId: agency?.id || 'demo-agency',
-        createdById: user?.id || 'demo-user',
+        agencyId: agency.id,
+        createdById: user.id,
       },
     });
     return NextResponse.json(folder);
   } catch (error: any) {
-    return NextResponse.json({ message: error?.message || 'Failed' }, { status: 500 });
+    return NextResponse.json({ message: error?.message || 'Failed to create folder' }, { status: 500 });
   }
 }

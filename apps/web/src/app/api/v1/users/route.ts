@@ -39,17 +39,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.json(users);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'u1',
-        email: 'superadmin@gov.ph',
-        firstName: 'Super',
-        lastName: 'Admin',
-        role: 'SUPER_ADMIN',
-        department: 'IT & Digital Services',
-        isActive: true,
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }
 
@@ -75,6 +65,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(created);
   } catch (error: any) {
-    return NextResponse.json({ message: error?.message || 'Failed' }, { status: 500 });
+    return NextResponse.json({ message: error?.message || 'Failed to create user' }, { status: 500 });
   }
 }

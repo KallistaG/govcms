@@ -18,16 +18,6 @@ export async function GET() {
     }));
     return NextResponse.json(formatted);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'u1',
-        userName: 'Super Admin',
-        userEmail: 'superadmin@gov.ph',
-        role: 'SUPER_ADMIN',
-        ipAddress: '192.168.1.100',
-        loginTime: new Date().toISOString(),
-        status: 'Active',
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }

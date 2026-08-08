@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
 
+async function getOrCreateAgencyAndUser() {
+  let agency = await prisma.agency.findFirst();
+  if (!agency) {
+    agency = await prisma.agency.create({
+      data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
+    });
+  }
+  let user = await prisma.user.findFirst();
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: 'admin@gov.ph',
+        passwordHash: '',
+        firstName: 'Agency',
+        lastName: 'Administrator',
+        role: 'ADMINISTRATOR',
+      },
+    });
+  }
+  return { agency, user };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const locationInput = searchParams.get('location') || 'HEADER_MENU';
@@ -17,15 +39,14 @@ export async function GET(request: Request) {
     });
 
     if (!menu) {
-      const agency = await prisma.agency.findFirst();
-      const user = await prisma.user.findFirst();
+      const { agency, user } = await getOrCreateAgencyAndUser();
       menu = await prisma.menu.create({
         data: {
-          name: `${location} Navigation`,
+          name: `${location.replace('_', ' ')}`,
           code: `${location.toLowerCase()}-${Date.now()}`,
           location,
-          agencyId: agency?.id || 'demo-agency',
-          createdById: user?.id || 'demo-user',
+          agencyId: agency.id,
+          createdById: user.id,
         },
         include: { items: true },
       });
@@ -52,8 +73,8 @@ export async function GET(request: Request) {
     });
   } catch {
     return NextResponse.json({
-      id: 'menu-demo',
-      name: 'Header Menu',
+      id: `menu-${location.toLowerCase()}`,
+      name: location.replace('_', ' '),
       location,
       items: [],
       tree: [],

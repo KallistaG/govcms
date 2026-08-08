@@ -16,14 +16,6 @@ export async function GET() {
     }));
     return NextResponse.json(formatted);
   } catch {
-    return NextResponse.json([
-      {
-        id: 'f1',
-        name: 'FOI_Agency_Annual_Report_2025.pdf',
-        size: '2.4 MB',
-        mimeType: 'application/pdf',
-        uploadedAt: new Date().toISOString(),
-      },
-    ]);
+    return NextResponse.json([]);
   }
 }
