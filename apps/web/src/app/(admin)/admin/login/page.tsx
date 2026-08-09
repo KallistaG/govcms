@@ -99,7 +99,7 @@ export default function LoginPage() {
           </div>
           <div className="flex items-center justify-center gap-1.5">
             <Badge variant="outline" className="text-[10px] font-bold text-amber-300 border-amber-400/40 bg-amber-400/10">
-              <ShieldCheck className="h-3 w-3 mr-1" /> Republic of the Philippines
+              <ShieldCheck className="h-3 w-3 mr-1" /> Official Government Portal
             </Badge>
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight">GovCMS Admin Portal</h1>

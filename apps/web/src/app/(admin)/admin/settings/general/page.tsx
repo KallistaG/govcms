@@ -135,7 +135,7 @@ export default function GeneralSettingsPage() {
                   id="tagline"
                   value={settings.tagline || settings.description || ''}
                   onChange={(e) => update('tagline', e.target.value)}
-                  placeholder="e.g. Providing safe, adequate, safe and potable water supply affordable to all."
+                  placeholder="e.g. Committed to public service excellence."
                 />
               </div>
             </CardContent>
@@ -293,12 +293,6 @@ export default function GeneralSettingsPage() {
                 </div>
               )}
 
-              {/* PST Bar */}
-              <div className="bg-slate-950 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800 flex items-center justify-between">
-                <span className="font-bold text-amber-400 uppercase tracking-wider">Republic of the Philippines</span>
-                <span className="font-mono text-[10px]">PST Official</span>
-              </div>
-
               {/* Header */}
               <header className="border-b bg-card px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -307,7 +301,7 @@ export default function GeneralSettingsPage() {
                   </div>
                   <div>
                     <h2 className="font-black text-base text-foreground tracking-tight">{siteName}</h2>
-                    <p className="text-[11px] text-muted-foreground font-semibold">GOV.PH Official Web Platform</p>
+                    <p className="text-[11px] text-muted-foreground font-semibold">Official Web Portal</p>
                   </div>
                 </div>
                 <nav className="hidden sm:flex items-center gap-4 text-xs font-bold text-muted-foreground">
@@ -326,7 +320,7 @@ export default function GeneralSettingsPage() {
 
                 <h1 className="text-3xl font-black text-foreground tracking-tight">{siteName}</h1>
                 <p className="text-sm text-muted-foreground max-w-xl leading-relaxed">
-                  {settings.tagline || 'Providing safe, adequate, safe and potable water supply affordable to all.'}
+                  {settings.tagline || settings.description || ''}
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full pt-6 text-left">
@@ -356,7 +350,7 @@ export default function GeneralSettingsPage() {
                   <Globe className="h-4 w-4 text-primary" /> {siteName}
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  © 2026 Republic of the Philippines. All rights reserved.
+                  © {new Date().getFullYear()} {siteName || 'Official Agency Portal'}. All rights reserved.
                 </p>
               </footer>
             </div>

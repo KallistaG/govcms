@@ -165,17 +165,6 @@ export default async function PublicLayout({ children }: { children: React.React
         </div>
       )}
 
-      <div className="bg-slate-950 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-2 font-medium">
-          <span className="font-bold text-amber-400 uppercase tracking-wider">Republic of the Philippines</span>
-          <span className="hidden sm:inline text-slate-500">•</span>
-          <span className="hidden sm:inline">Official Government Agency Portal</span>
-        </div>
-        <div className="flex items-center gap-4 text-[10px] font-mono">
-          <span>PST: {new Date().toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-        </div>
-      </div>
-
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3 group">
@@ -191,7 +180,7 @@ export default async function PublicLayout({ children }: { children: React.React
                 {settings.siteName || settings.websiteName || ''}
               </span>
               <span className="text-[10px] text-muted-foreground font-semibold">
-                GOV.PH Official Web Platform
+                Official Agency Portal
               </span>
             </div>
           </Link>
@@ -289,16 +278,15 @@ export default async function PublicLayout({ children }: { children: React.React
             </div>
 
             <div>
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">GOV.PH Links</h4>
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Portal Links</h4>
               <ul className="space-y-2 text-xs text-slate-400">
-                <li><a href="https://www.gov.ph" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">Official Gazette <ExternalLink className="h-3 w-3" /></a></li>
                 {settings.facebook && <li><a href={settings.facebook} target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center gap-1">Official Facebook Page <ExternalLink className="h-3 w-3" /></a></li>}
               </ul>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-            <span>© {new Date().getFullYear()} Republic of the Philippines. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} {settings.siteName || settings.websiteName || 'Official Agency Portal'}. All rights reserved.</span>
             <div className="flex items-center gap-4 text-[11px]">
               <Link href="/pages/about" className="hover:text-slate-300 transition-colors">About Mandate</Link>
               <Link href="/admin/login" className="hover:text-slate-300 transition-colors">Admin Portal Login</Link>

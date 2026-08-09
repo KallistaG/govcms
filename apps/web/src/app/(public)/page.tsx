@@ -45,7 +45,7 @@ export default async function PublicHomePage() {
                 <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
                   <div className="space-y-6 text-center lg:text-left max-w-2xl">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold border border-white/20 backdrop-blur-xs">
-                      <Sparkles className="h-3.5 w-3.5" /> Republic of the Philippines Official Portal
+                      <Sparkles className="h-3.5 w-3.5" /> Official Government Web Portal
                     </div>
                     <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
                       {sec.title || settings.siteName}
@@ -65,7 +65,7 @@ export default async function PublicHomePage() {
                   <div className="grid grid-cols-2 gap-4 w-full lg:w-auto shrink-0">
                     <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 space-y-1 text-center">
                       <span className="text-3xl font-black text-amber-400 font-mono">100%</span>
-                      <span className="text-xs font-semibold text-slate-200 block">Potable Water</span>
+                      <span className="text-xs font-semibold text-slate-200 block">Public Access</span>
                     </div>
                     <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 space-y-1 text-center">
                       <span className="text-3xl font-black text-amber-400 font-mono">24/7</span>
@@ -140,7 +140,7 @@ export default async function PublicHomePage() {
                     </div>
                   </div>
                   <div className="rounded-2xl border bg-muted/40 h-64 overflow-hidden shadow-2xs">
-                    <iframe title="Agency Office Map" src={settings.googleMaps || "https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed"} className="w-full h-full border-0" loading="lazy" />
+                    <iframe title="Agency Office Map" src={settings.googleMaps || (settings.address ? `https://maps.google.com/maps?q=${encodeURIComponent(settings.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : "https://maps.google.com/maps?q=Government+Office&t=&z=15&ie=UTF8&iwloc=&output=embed")} className="w-full h-full border-0" loading="lazy" />
                   </div>
                 </div>
               </section>
@@ -155,7 +155,7 @@ export default async function PublicHomePage() {
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
               <div className="space-y-6 text-center lg:text-left max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold border border-white/20 backdrop-blur-xs">
-                  <Sparkles className="h-3.5 w-3.5" /> Republic of the Philippines Official Portal
+                  <Sparkles className="h-3.5 w-3.5" /> Official Government Web Portal
                 </div>
                 <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
                   {settings.siteName}
@@ -175,7 +175,7 @@ export default async function PublicHomePage() {
               <div className="grid grid-cols-2 gap-4 w-full lg:w-auto shrink-0">
                 <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 space-y-1 text-center">
                   <span className="text-3xl font-black text-amber-400 font-mono">100%</span>
-                  <span className="text-xs font-semibold text-slate-200 block">Potable Water</span>
+                  <span className="text-xs font-semibold text-slate-200 block">Public Access</span>
                 </div>
                 <div className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 space-y-1 text-center">
                   <span className="text-3xl font-black text-amber-400 font-mono">24/7</span>
@@ -202,7 +202,7 @@ export default async function PublicHomePage() {
                 </div>
               </div>
               <div className="rounded-2xl border bg-muted/40 h-64 overflow-hidden shadow-2xs">
-                <iframe title="Agency Office Map" src={settings.googleMaps || "https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed"} className="w-full h-full border-0" loading="lazy" />
+                <iframe title="Agency Office Map" src={settings.googleMaps || (settings.address ? `https://maps.google.com/maps?q=${encodeURIComponent(settings.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed` : "https://maps.google.com/maps?q=Government+Office&t=&z=15&ie=UTF8&iwloc=&output=embed")} className="w-full h-full border-0" loading="lazy" />
               </div>
             </div>
           </section>

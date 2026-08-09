@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
-import { getOrBootstrapAgency } from '../../../../../lib/agency-bootstrap';
+import { getOrBootstrapAgency } from '@/lib/agency-bootstrap';
 
 async function getOrCreateAgencyAndUser() {
   const agency = await getOrBootstrapAgency();

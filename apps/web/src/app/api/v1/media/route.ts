@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
-import { getOrBootstrapAgency } from '../../../../lib/agency-bootstrap';
+import { getOrBootstrapAgency } from '@/lib/agency-bootstrap';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

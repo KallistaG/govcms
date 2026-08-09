@@ -369,11 +369,6 @@ export default function HomepageBuilderPage() {
                 </div>
               )}
 
-              <div className="bg-slate-950 text-slate-300 text-[11px] py-1.5 px-4 border-b border-slate-800 flex items-center justify-between">
-                <span className="font-bold text-amber-400">Republic of the Philippines</span>
-                <span className="font-mono text-[10px]">PST Official</span>
-              </div>
-
               {/* Website Header */}
               <header className="border-b bg-card px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -409,7 +404,7 @@ export default function HomepageBuilderPage() {
                             {(sec.config?.headline as string) || siteName}
                           </h2>
                           <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                            {(sec.config?.subtext as string) || siteSettings?.tagline || 'Providing safe, adequate, potable water supply affordable to all.'}
+                            {(sec.config?.subtext as string) || siteSettings?.tagline || siteSettings?.description || ''}
                           </p>
                           <div className="pt-2 flex justify-center gap-3">
                             <Button className="font-bold text-xs px-6 shadow-md">Explore Services</Button>
@@ -463,7 +458,7 @@ export default function HomepageBuilderPage() {
                       {sec.type === 'statistics' && (
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 text-center">
                           {[
-                            { label: 'Active Connections', val: '45,200+' },
+                            { label: 'Published Records', val: '1,200+' },
                             { label: 'Satisfaction Rate', val: '99.4%' },
                             { label: 'Service Coverage', val: '100%' },
                             { label: 'Support Desk', val: '24/7' },
@@ -492,7 +487,7 @@ export default function HomepageBuilderPage() {
                   <Globe className="h-4 w-4 text-primary" /> {siteName}
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  © 2026 Republic of the Philippines. Official Agency Web Platform.
+                  © {new Date().getFullYear()} {siteName || 'Official Agency Portal'}. All rights reserved.
                 </p>
               </footer>
             </div>

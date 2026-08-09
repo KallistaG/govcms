@@ -16,8 +16,8 @@ export async function GET() {
     {
       id: 'sec-hero-1',
       type: 'hero',
-      title: 'Department of Information & Communications Technology',
-      subtitle: 'Official Enterprise Web Portal Engine of the Republic of the Philippines',
+      title: '',
+      subtitle: '',
       order: 0,
       isVisible: true,
       config: {},
