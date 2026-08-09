@@ -72,11 +72,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('Password123!');
-  };
-
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!forgotEmail) return;
@@ -200,50 +195,6 @@ export default function LoginPage() {
                   'Sign In to Admin Portal'
                 )}
               </Button>
-
-              <div className="w-full border-t pt-4">
-                <p className="text-[11px] font-bold text-muted-foreground mb-2 text-center">
-                  Demo Fast Credentials
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="text-[11px] h-8"
-                    onClick={() => handleQuickLogin('superadmin@gov.ph')}
-                  >
-                    Super Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="text-[11px] h-8"
-                    onClick={() => handleQuickLogin('admin@gov.ph')}
-                  >
-                    Agency Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="text-[11px] h-8"
-                    onClick={() => handleQuickLogin('editor@gov.ph')}
-                  >
-                    Content Editor
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="text-[11px] h-8"
-                    onClick={() => handleQuickLogin('publisher@gov.ph')}
-                  >
-                    Publisher
-                  </Button>
-                </div>
-              </div>
             </CardFooter>
           </form>
         </Card>
@@ -270,20 +221,6 @@ export default function LoginPage() {
                       {forgotResult.message}
                     </AlertDescription>
                   </Alert>
-
-                  {forgotResult.resetUrl && (
-                    <div className="p-3 bg-muted rounded border space-y-1">
-                      <p className="text-[11px] font-bold text-muted-foreground">Demo Reset URL:</p>
-                      <a
-                        href={forgotResult.resetUrl}
-                        className="text-xs text-primary font-mono font-bold break-all hover:underline"
-                        onClick={() => setShowForgotModal(false)}
-                      >
-                        {forgotResult.resetUrl}
-                      </a>
-                    </div>
-                  )}
-
                   <CardFooter className="px-0 pt-2 flex justify-end">
                     <Button variant="outline" size="sm" onClick={() => setShowForgotModal(false)}>
                       Close
