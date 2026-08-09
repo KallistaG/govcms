@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@govcms/database';
+import { prisma, getWebsiteSettings } from '@govcms/database';
+import { getOrBootstrapAgency } from '../../../../lib/agency-bootstrap';
 
 async function getOrCreateAgencyAndUser() {
-  let agency = await prisma.agency.findFirst();
-  if (!agency) {
-    agency = await prisma.agency.create({
-      data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
-    });
-  }
+  const agency = await getOrBootstrapAgency();
   let author = await prisma.user.findFirst();
   if (!author) {
     author = await prisma.user.create({
@@ -27,12 +23,13 @@ export async function GET() {
   try {
     let theme = await prisma.themeConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
     if (!theme) {
+      const settings = await getWebsiteSettings();
       const { agency, author } = await getOrCreateAgencyAndUser();
       theme = await prisma.themeConfig.create({
         data: {
-          websiteName: 'La Carlota City Water District',
-          primaryColor: '#1d4ed8',
-          secondaryColor: '#7c3aed',
+          websiteName: settings.siteName || 'Government Agency Portal',
+          primaryColor: settings.primaryColor || '#1d4ed8',
+          secondaryColor: settings.secondaryColor || '#7c3aed',
           fontHeading: 'Inter',
           fontBody: 'Inter',
           isActive: true,
@@ -42,7 +39,8 @@ export async function GET() {
       });
     }
     return NextResponse.json(theme);
-  } catch (error: any) {
+  } catch (error) {
+    console.error('[API_ERROR] GET /api/v1/theme:', error);
     return NextResponse.json({
       primaryColor: '#1d4ed8',
       secondaryColor: '#7c3aed',
@@ -69,12 +67,13 @@ export async function POST(request: Request) {
         },
       });
     } else {
+      const settings = await getWebsiteSettings();
       const { agency, author } = await getOrCreateAgencyAndUser();
       updated = await prisma.themeConfig.create({
         data: {
-          websiteName: 'La Carlota City Water District',
-          primaryColor: body.primaryColor || '#1d4ed8',
-          secondaryColor: body.secondaryColor || '#7c3aed',
+          websiteName: settings.siteName || 'Government Agency Portal',
+          primaryColor: body.primaryColor || settings.primaryColor || '#1d4ed8',
+          secondaryColor: body.secondaryColor || settings.secondaryColor || '#7c3aed',
           fontHeading: body.fontHeading || 'Inter',
           fontBody: body.fontBody || 'Inter',
           isActive: true,
@@ -85,6 +84,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(updated);
   } catch (error: any) {
+    console.error('[API_ERROR] POST /api/v1/theme:', error);
     return NextResponse.json({ message: error?.message || 'Failed to update theme' }, { status: 500 });
   }
 }

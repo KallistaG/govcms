@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
+import { getOrBootstrapAgency } from '../../../../../lib/agency-bootstrap';
 
 export async function GET() {
   try {
@@ -25,12 +26,7 @@ export async function POST(request: Request) {
     const { name, parentId } = await request.json();
     const slug = name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') : `folder-${Date.now()}`;
 
-    let agency = await prisma.agency.findFirst();
-    if (!agency) {
-      agency = await prisma.agency.create({
-        data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
-      });
-    }
+    const agency = await getOrBootstrapAgency();
 
     let user = await prisma.user.findFirst();
     if (!user) {

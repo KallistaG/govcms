@@ -125,7 +125,7 @@ export default function HomepageBuilderPage() {
     toast.success('Homepage changes live published to public website portal!');
   };
 
-  const siteName = siteSettings?.siteName || siteSettings?.websiteName || 'La Carlota City Water District';
+  const siteName = siteSettings?.siteName || siteSettings?.websiteName || '';
 
   return (
     <div className="space-y-6">

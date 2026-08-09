@@ -26,21 +26,21 @@ export interface WebsiteSettingsDTO {
 }
 
 export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettingsDTO = {
-  siteName: 'La Carlota City Water District',
-  websiteName: 'La Carlota City Water District',
-  tagline: 'Providing safe, adequate, safe and potable water supply affordable to all.',
-  description: 'Providing safe, adequate, safe and potable water supply affordable to all.',
-  seoTitle: 'La Carlota City Water District | Official Portal',
-  seoDescription: 'Providing safe, adequate, safe and potable water supply affordable to all.',
-  keywords: 'govcms, philippines, dict, government, public services, water district',
+  siteName: '',
+  websiteName: '',
+  tagline: '',
+  description: '',
+  seoTitle: '',
+  seoDescription: '',
+  keywords: 'government, public services, official portal',
   primaryColor: '#1d4ed8',
   secondaryColor: '#7c3aed',
-  email: 'info@lacarlotawater.gov.ph',
-  phone: '+63 (034) 460-2234',
-  address: 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
-  googleMaps: 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed',
-  googleMapsUrl: 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed',
-  facebook: 'https://facebook.com/LaCarlotaCityWaterDistrict',
+  email: '',
+  phone: '',
+  address: '',
+  googleMaps: '',
+  googleMapsUrl: '',
+  facebook: '',
   maintenanceMode: false,
   maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance. Please check back shortly.',
 };
@@ -52,7 +52,7 @@ const globalStore = globalThis as unknown as {
 export async function createDefaultWebsiteSettings(): Promise<WebsiteSettingsDTO> {
   const created = await prisma.websiteSettings.create({
     data: {
-      siteName: DEFAULT_WEBSITE_SETTINGS.siteName || 'La Carlota City Water District',
+      siteName: DEFAULT_WEBSITE_SETTINGS.siteName || '',
       tagline: DEFAULT_WEBSITE_SETTINGS.tagline || '',
       seoTitle: DEFAULT_WEBSITE_SETTINGS.seoTitle || '',
       seoDescription: DEFAULT_WEBSITE_SETTINGS.seoDescription || '',
@@ -115,7 +115,7 @@ export async function getWebsiteSettings(): Promise<WebsiteSettingsDTO> {
 
 export async function updateWebsiteSettings(data: WebsiteSettingsDTO): Promise<WebsiteSettingsDTO> {
   const current = globalStore.__govcms_website_settings || DEFAULT_WEBSITE_SETTINGS;
-  const newSiteName = data.siteName || data.websiteName || current.siteName || 'La Carlota City Water District';
+  const newSiteName = data.siteName || data.websiteName || current.siteName || '';
   const newTagline = data.tagline || data.description || current.tagline || '';
 
   const merged: WebsiteSettingsDTO = {
@@ -149,7 +149,7 @@ export async function updateWebsiteSettings(data: WebsiteSettingsDTO): Promise<W
       const updated = await prisma.websiteSettings.update({
         where: { id: settings.id },
         data: {
-          siteName: merged.siteName || 'La Carlota City Water District',
+          siteName: merged.siteName || '',
           tagline: merged.tagline || '',
           seoTitle: merged.seoTitle || '',
           seoDescription: merged.seoDescription || '',
@@ -180,7 +180,7 @@ export async function updateWebsiteSettings(data: WebsiteSettingsDTO): Promise<W
     } else {
       const created = await prisma.websiteSettings.create({
         data: {
-          siteName: merged.siteName || 'La Carlota City Water District',
+          siteName: merged.siteName || '',
           tagline: merged.tagline || '',
           seoTitle: merged.seoTitle || '',
           seoDescription: merged.seoDescription || '',

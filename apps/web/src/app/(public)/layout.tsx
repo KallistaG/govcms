@@ -119,8 +119,8 @@ async function getPublicWebsiteSettings() {
   }
 
   return dbSettings || {
-    siteName: 'La Carlota City Water District',
-    websiteName: 'La Carlota City Water District',
+    siteName: '',
+    websiteName: '',
     maintenanceMode: false,
   };
 }
@@ -188,7 +188,7 @@ export default async function PublicLayout({ children }: { children: React.React
             )}
             <div className="flex flex-col">
               <span className="font-black text-sm text-foreground tracking-tight group-hover:text-primary transition-colors leading-tight">
-                {settings.siteName || settings.websiteName || 'La Carlota City Water District'}
+                {settings.siteName || settings.websiteName || ''}
               </span>
               <span className="text-[10px] text-muted-foreground font-semibold">
                 GOV.PH Official Web Platform
@@ -254,7 +254,7 @@ export default async function PublicLayout({ children }: { children: React.React
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
                 <Globe className="h-5 w-5 text-primary" />
-                <span>{settings.siteName || settings.websiteName || 'La Carlota City Water District'}</span>
+                <span>{settings.siteName || settings.websiteName || ''}</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
                 {settings.tagline || settings.seoDescription}

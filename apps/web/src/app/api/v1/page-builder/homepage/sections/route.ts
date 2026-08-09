@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
+import { getOrBootstrapAgency } from '../../../../../lib/agency-bootstrap';
 
 async function getOrCreateAgencyAndUser() {
-  let agency = await prisma.agency.findFirst();
-  if (!agency) {
-    agency = await prisma.agency.create({
-      data: { name: 'La Carlota City Water District', code: 'LCCWD', slug: 'lccwd' },
-    });
-  }
+  const agency = await getOrBootstrapAgency();
   let author = await prisma.user.findFirst();
   if (!author) {
     author = await prisma.user.create({
@@ -51,6 +47,7 @@ export async function POST(request: Request) {
     }
     return NextResponse.json(updated);
   } catch (error: any) {
+    console.error('[API_ERROR] POST /api/v1/page-builder/homepage/sections:', error);
     return NextResponse.json({ message: error?.message || 'Failed to update sections' }, { status: 500 });
   }
 }

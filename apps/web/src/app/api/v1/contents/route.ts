@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
+import { getOrBootstrapAgency } from '../../../../lib/agency-bootstrap';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -74,16 +75,7 @@ export async function POST(request: Request) {
       });
     }
 
-    let agency = await prisma.agency.findFirst();
-    if (!agency) {
-      agency = await prisma.agency.create({
-        data: {
-          name: 'La Carlota City Water District',
-          code: 'LCCWD',
-          slug: 'lccwd',
-        },
-      });
-    }
+    const agency = await getOrBootstrapAgency();
 
     const created = await prisma.contentItem.create({
       data: {

@@ -78,7 +78,7 @@ export default function GeneralSettingsPage() {
     );
   }
 
-  const siteName = settings.siteName || settings.websiteName || 'La Carlota City Water District';
+  const siteName = settings.siteName || settings.websiteName || '';
 
   return (
     <div className="space-y-6">
@@ -123,7 +123,7 @@ export default function GeneralSettingsPage() {
                   id="siteName"
                   value={settings.siteName || settings.websiteName || ''}
                   onChange={(e) => update('siteName', e.target.value)}
-                  placeholder="e.g. La Carlota City Water District"
+                  placeholder="e.g. Department of Agriculture"
                 />
               </div>
 
@@ -333,19 +333,19 @@ export default function GeneralSettingsPage() {
                   <div className="border p-4 rounded-xl bg-card space-y-1">
                     <Mail className="h-4 w-4 text-primary" />
                     <span className="font-bold text-xs block text-foreground">Official Email</span>
-                    <p className="text-[11px] text-muted-foreground font-mono">{settings.email || 'info@lacarlotawater.gov.ph'}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono">{settings.email || 'No email configured'}</p>
                   </div>
 
                   <div className="border p-4 rounded-xl bg-card space-y-1">
                     <Phone className="h-4 w-4 text-primary" />
                     <span className="font-bold text-xs block text-foreground">Official Hotline</span>
-                    <p className="text-[11px] text-muted-foreground font-mono">{settings.phone || '+63 (034) 460-2234'}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono">{settings.phone || 'No phone configured'}</p>
                   </div>
 
                   <div className="border p-4 rounded-xl bg-card space-y-1">
                     <MapPin className="h-4 w-4 text-primary" />
                     <span className="font-bold text-xs block text-foreground">Office Address</span>
-                    <p className="text-[11px] text-muted-foreground line-clamp-2">{settings.address || 'Gurrea St., La Carlota City'}</p>
+                    <p className="text-[11px] text-muted-foreground line-clamp-2">{settings.address || 'No address configured yet'}</p>
                   </div>
                 </div>
               </div>

@@ -19,8 +19,8 @@ export async function GET() {
       {
         id: 'sec-hero-1',
         type: 'hero',
-        title: settings.siteName || 'La Carlota City Water District',
-        subtitle: settings.tagline || 'Providing safe, adequate, safe and potable water supply affordable to all.',
+        title: settings.siteName || '',
+        subtitle: settings.tagline || '',
         order: 0,
         isVisible: true,
         config: {},

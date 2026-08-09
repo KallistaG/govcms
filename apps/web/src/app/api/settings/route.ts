@@ -17,19 +17,21 @@ export async function GET(request: Request) {
     const settings = await getWebsiteSettings();
     const merged = cookieSettings ? { ...settings, ...cookieSettings } : settings;
     return NextResponse.json(merged);
-  } catch {
+  } catch (error) {
+    console.error('[API_ERROR] GET /api/settings:', error);
+    // Return cookie-persisted settings if DB is unavailable, or minimal defaults
     return NextResponse.json(
       cookieSettings || {
-        siteName: 'La Carlota City Water District',
-        tagline: 'Providing safe, adequate, safe and potable water supply affordable to all.',
-        seoTitle: 'La Carlota City Water District | Official Portal',
-        seoDescription: 'Providing safe, adequate, safe and potable water supply affordable to all.',
-        keywords: 'govcms, philippines, dict, government, public services, water district',
-        email: 'info@lacarlotawater.gov.ph',
-        phone: '+63 (034) 460-2234',
-        address: 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
-        googleMaps: 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental&t=&z=15&ie=UTF8&iwloc=&output=embed',
-        facebook: 'https://facebook.com/LaCarlotaCityWaterDistrict',
+        siteName: '',
+        tagline: '',
+        seoTitle: '',
+        seoDescription: '',
+        keywords: '',
+        email: '',
+        phone: '',
+        address: '',
+        googleMaps: '',
+        facebook: '',
         maintenanceMode: false,
         maintenanceMessage: 'The official agency portal is currently undergoing scheduled system maintenance.',
       }
@@ -48,21 +50,23 @@ export async function PUT(request: Request) {
       sameSite: 'lax',
     });
     return response;
-  } catch {
+  } catch (error) {
+    console.error('[API_ERROR] PUT /api/settings:', error);
     const body = await request.json().catch(() => ({}));
+    // Echo back whatever the user submitted — they submitted it so it's their data
     const fallbackData = {
-      siteName: body.siteName || 'La Carlota City Water District',
-      websiteName: body.siteName || 'La Carlota City Water District',
-      tagline: body.tagline || 'Providing safe, adequate, safe and potable water supply affordable to all.',
-      description: body.tagline || 'Providing safe, adequate, safe and potable water supply affordable to all.',
-      seoTitle: body.seoTitle || 'La Carlota City Water District | Official Portal',
-      seoDescription: body.seoDescription || 'Providing safe, adequate, safe and potable water supply affordable to all.',
-      keywords: body.keywords || 'govcms, philippines, dict, government, public services, water district',
-      email: body.email || 'info@lacarlotawater.gov.ph',
-      phone: body.phone || '+63 (034) 460-2234',
-      address: body.address || 'Gurrea St., La Carlota City, Negros Occidental, Philippines',
-      googleMaps: body.googleMaps || 'https://maps.google.com/maps?q=La+Carlota+City+Negros+Occidental',
-      facebook: body.facebook || 'https://facebook.com/LaCarlotaCityWaterDistrict',
+      siteName: body.siteName || '',
+      websiteName: body.siteName || '',
+      tagline: body.tagline || '',
+      description: body.tagline || '',
+      seoTitle: body.seoTitle || '',
+      seoDescription: body.seoDescription || '',
+      keywords: body.keywords || '',
+      email: body.email || '',
+      phone: body.phone || '',
+      address: body.address || '',
+      googleMaps: body.googleMaps || '',
+      facebook: body.facebook || '',
       maintenanceMode: body.maintenanceMode ?? false,
       maintenanceMessage: body.maintenanceMessage || 'Under maintenance.',
     };

@@ -36,7 +36,7 @@ export interface ThemeConfig {
 }
 
 const DEFAULT_THEME: ThemeConfig = {
-  websiteName: 'La Carlota City Water District',
+  websiteName: '',
   logoUrl: null,
   faviconUrl: null,
   primaryColor: '#1d4ed8',
@@ -53,7 +53,7 @@ const DEFAULT_THEME: ThemeConfig = {
     bgColor: '#0f172a',
     textColor: '#94a3b8',
     showSocials: true,
-    copyright: '© 2026 La Carlota City Water District. All rights reserved.',
+    copyright: '',
   },
   buttonStyle: {
     borderRadius: '8px',
