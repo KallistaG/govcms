@@ -16,7 +16,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<{ message: string; resetToken?: string; resetUrl?: string }>;
+  forgotPassword: (email: string) => Promise<{ message: string; resetUrl?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ message: string }>;
   clearError: () => void;
 }
@@ -173,14 +173,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return data;
     } catch {
-      return {
-        message: 'Failed to submit password reset request',
-      };
+      const message = 'Failed to submit password reset request';
+      setError(message);
+      throw new Error(message);
     }
   };
 
   const resetPassword = async (token: string, newPassword: string) => {
     setError(null);
+    if (!token) {
+      const message = 'Reset token is required';
+      setError(message);
+      throw new Error(message);
+    }
     try {
       const res = await fetch(`${API_URL}/auth/reset-password`, {
         method: 'POST',

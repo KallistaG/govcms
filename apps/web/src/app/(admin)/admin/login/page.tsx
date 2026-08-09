@@ -47,7 +47,6 @@ export default function LoginPage() {
   const [forgotSubmitting, setForgotSubmitting] = React.useState(false);
   const [forgotResult, setForgotResult] = React.useState<{
     message: string;
-    resetToken?: string;
     resetUrl?: string;
   } | null>(null);
 
@@ -77,9 +76,12 @@ export default function LoginPage() {
     if (!forgotEmail) return;
 
     setForgotSubmitting(true);
+    setForgotResult(null);
     try {
       const res = await forgotPassword(forgotEmail);
       setForgotResult(res);
+    } catch {
+      // Error state is surfaced by AuthContext.
     } finally {
       setForgotSubmitting(false);
     }

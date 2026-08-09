@@ -22,6 +22,7 @@ import {
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
+  const hasToken = token.trim().length > 0;
   const { resetPassword } = useAuth();
   const router = useRouter();
 
@@ -32,13 +33,26 @@ function ResetPasswordContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPassword || newPassword.length < 8) {
-      setStatusMessage({ type: 'error', text: 'Password must be at least 8 characters long.' });
+    if (!hasToken) {
+      setStatusMessage({ type: 'error', text: 'A valid reset token is required to change your password.' });
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 10) {
+      setStatusMessage({ type: 'error', text: 'Password must be at least 10 characters long.' });
       return;
     }
 
     if (newPassword !== confirmPassword) {
       setStatusMessage({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Password must include uppercase and lowercase letters, a number, and a symbol.',
+      });
       return;
     }
 
@@ -72,6 +86,16 @@ function ResetPasswordContent() {
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {!hasToken && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle className="text-xs font-bold">Missing Reset Token</AlertTitle>
+              <AlertDescription className="text-xs">
+                This page requires a valid password-reset token. Please use the link from your reset request.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {statusMessage && (
             <Alert variant={statusMessage.type === 'success' ? 'default' : 'destructive'}>
               {statusMessage.type === 'success' ? (
@@ -93,13 +117,17 @@ function ResetPasswordContent() {
               <Input
                 id="newPassword"
                 type="password"
-                placeholder="At least 8 characters"
+                placeholder="At least 10 characters"
                 className="pl-9"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
+                disabled={!hasToken}
               />
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              Use 10+ characters with uppercase, lowercase, a number, and a symbol.
+            </p>
           </div>
 
           <div className="space-y-1.5">
@@ -114,13 +142,14 @@ function ResetPasswordContent() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                disabled={!hasToken}
               />
             </div>
           </div>
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-2">
-          <Button type="submit" className="w-full font-bold" disabled={isSubmitting}>
+          <Button type="submit" className="w-full font-bold" disabled={isSubmitting || !hasToken}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Updating Credentials...
