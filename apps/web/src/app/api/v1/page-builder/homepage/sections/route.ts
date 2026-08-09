@@ -1,52 +1,77 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
 import { getOrBootstrapAgency } from '@/lib/agency-bootstrap';
+import { AuthError, AuthConfigurationError, requireAuth } from '@/lib/server-auth';
+import { requireAgencyScopedAccess, requireHomepageEditAccess } from '@/lib/cms-access';
+import { writeAuditLog } from '@/lib/audit';
 
-async function getOrCreateAgencyAndUser() {
-  const agency = await getOrBootstrapAgency();
-  let author = await prisma.user.findFirst();
-  if (!author) {
-    author = await prisma.user.create({
-      data: {
-        email: 'admin@gov.ph',
-        passwordHash: '',
-        firstName: 'Agency',
-        lastName: 'Administrator',
-        role: 'ADMINISTRATOR',
-      },
-    });
+function normalizeSections(body: unknown): string {
+  const sections = Array.isArray(body) ? body : (body as { sections?: unknown } | null)?.sections;
+  return JSON.stringify(Array.isArray(sections) ? sections : []);
+}
+
+async function resolveAgencyId(actor: { role: string; agencyId: string | null }): Promise<string> {
+  if (actor.role === 'SUPER_ADMIN') {
+    if (actor.agencyId?.trim()) {
+      return actor.agencyId.trim();
+    }
+
+    const agency = await getOrBootstrapAgency();
+    return agency.id;
   }
-  return { agency, author };
+
+  return requireAgencyScopedAccess(actor as any) as string;
 }
 
 export async function POST(request: Request) {
   try {
+    const actor = requireHomepageEditAccess(await requireAuth(request));
     const body = await request.json();
-    const sections = Array.isArray(body) ? body : body.sections || [];
-    const existing = await prisma.homepageConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
+    const agencyId = requireAgencyScopedAccess(actor);
+    const existing = await prisma.homepageConfig.findFirst({
+      where: agencyId ? { agencyId } : undefined,
+      orderBy: { updatedAt: 'desc' },
+    });
 
     let updated;
     if (existing) {
       updated = await prisma.homepageConfig.update({
         where: { id: existing.id },
         data: {
-          sections: JSON.stringify(sections),
+          sections: normalizeSections(body),
           isDraft: true,
         },
       });
     } else {
-      const { agency, author } = await getOrCreateAgencyAndUser();
+      const resolvedAgencyId = await resolveAgencyId(actor);
       updated = await prisma.homepageConfig.create({
         data: {
-          sections: JSON.stringify(sections),
+          sections: normalizeSections(body),
           isDraft: true,
-          agencyId: agency.id,
-          authorId: author.id,
+          agencyId: resolvedAgencyId,
+          authorId: actor.id,
         },
       });
     }
+
+    await writeAuditLog({
+      actor,
+      request,
+      action: 'HOMEPAGE_DRAFT_SAVED',
+      entityType: 'HomepageConfig',
+      entityId: updated.id,
+      metadata: {
+        agencyId: updated.agencyId,
+        isDraft: updated.isDraft,
+      },
+    });
+
     return NextResponse.json(updated);
   } catch (error: any) {
+    if (error instanceof AuthError || error instanceof AuthConfigurationError) {
+      return NextResponse.json({ message: error.message }, { status: error.status ?? 500 });
+    }
+
     console.error('[API_ERROR] POST /api/v1/page-builder/homepage/sections:', error);
     return NextResponse.json({ message: error?.message || 'Failed to update sections' }, { status: 500 });
   }
