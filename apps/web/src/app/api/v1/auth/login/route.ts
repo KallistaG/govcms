@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'govcms-secure-secret-key-2026';
+import { getJwtSecret, isAuthConfigurationError, sanitizeUser } from '@/lib/server-auth';
 
 export async function POST(request: Request) {
   try {
@@ -41,11 +40,11 @@ export async function POST(request: Request) {
 
     const token = jwt.sign(
       { sub: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '7d' },
     );
 
-    const userProfile = {
+    const userProfile = sanitizeUser({
       id: user.id,
       email: user.email,
       firstName: user.firstName,
@@ -54,8 +53,9 @@ export async function POST(request: Request) {
       department: user.department || 'Public Information Office',
       phone: user.phone || null,
       avatarUrl: user.avatarUrl || null,
+      agencyId: user.agencyId || null,
       permissions: user.permissions || [],
-    };
+    });
 
     const response = NextResponse.json({
       accessToken: token,
@@ -66,10 +66,16 @@ export async function POST(request: Request) {
       httpOnly: true,
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
     });
 
     return response;
   } catch (error: any) {
+    if (isAuthConfigurationError(error)) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+
     return NextResponse.json({ message: error?.message || 'Login failed' }, { status: 500 });
   }
 }

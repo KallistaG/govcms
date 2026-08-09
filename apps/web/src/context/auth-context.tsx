@@ -48,8 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem(ACCESS_TOKEN_KEY, accessToken);
     storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-
-    document.cookie = `govcms_access_token=${accessToken}; path=/; max-age=604800; SameSite=Lax`;
   };
 
   const clearTokens = () => {
@@ -60,7 +58,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(USER_PROFILE_KEY);
     sessionStorage.removeItem(ACCESS_TOKEN_KEY);
     sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-    document.cookie = 'govcms_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   };
 
   React.useEffect(() => {

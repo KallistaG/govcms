@@ -17,6 +17,7 @@ export interface UserProfile {
   avatarUrl?: string | null;
   permissions?: string[] | string | null;
   agency?: UserAgency | null;
+  agencyId?: string | null;
 }
 
 export interface AuthResponse {
