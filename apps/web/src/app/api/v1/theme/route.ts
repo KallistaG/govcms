@@ -1,30 +1,31 @@
 import { NextResponse } from 'next/server';
 import { prisma, getWebsiteSettings } from '@govcms/database';
 import { getOrBootstrapAgency } from '@/lib/agency-bootstrap';
+import { AuthError, AuthConfigurationError, requireAuth } from '@/lib/server-auth';
+import { getScopedAgencyId, requireSettingsAccess } from '@/lib/admin-rbac';
+import { writeAuditLog } from '@/lib/audit';
 
-async function getOrCreateAgencyAndUser() {
-  const agency = await getOrBootstrapAgency();
-  let author = await prisma.user.findFirst();
-  if (!author) {
-    author = await prisma.user.create({
-      data: {
-        email: 'admin@gov.ph',
-        passwordHash: '',
-        firstName: 'Agency',
-        lastName: 'Administrator',
-        role: 'ADMINISTRATOR',
-      },
-    });
+async function resolveAgencyId(actorAgencyId?: string | null): Promise<string> {
+  if (actorAgencyId) {
+    return actorAgencyId;
   }
-  return { agency, author };
+
+  const agency = await getOrBootstrapAgency();
+  return agency.id;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    let theme = await prisma.themeConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
+    const actor = requireSettingsAccess(await requireAuth(request));
+    const agencyId = getScopedAgencyId(actor);
+    let theme = await prisma.themeConfig.findFirst({
+      where: agencyId ? { agencyId } : undefined,
+      orderBy: { updatedAt: 'desc' },
+    });
+
     if (!theme) {
       const settings = await getWebsiteSettings();
-      const { agency, author } = await getOrCreateAgencyAndUser();
+      const resolvedAgencyId = await resolveAgencyId(actor.agencyId);
       theme = await prisma.themeConfig.create({
         data: {
           websiteName: settings.siteName || 'Government Agency Portal',
@@ -33,13 +34,18 @@ export async function GET() {
           fontHeading: 'Inter',
           fontBody: 'Inter',
           isActive: true,
-          agencyId: agency.id,
-          authorId: author.id,
+          agencyId: resolvedAgencyId,
+          authorId: actor.id,
         },
       });
     }
+
     return NextResponse.json(theme);
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AuthError || error instanceof AuthConfigurationError) {
+      return NextResponse.json({ message: error.message }, { status: error.status ?? 500 });
+    }
+
     console.error('[API_ERROR] GET /api/v1/theme:', error);
     return NextResponse.json({
       primaryColor: '#1d4ed8',
@@ -53,37 +59,59 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const existing = await prisma.themeConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
+    const actor = requireSettingsAccess(await requireAuth(request));
+    const body = (await request.json()) as Record<string, unknown>;
+    const agencyId = getScopedAgencyId(actor);
+    const existing = await prisma.themeConfig.findFirst({
+      where: agencyId ? { agencyId } : undefined,
+      orderBy: { updatedAt: 'desc' },
+    });
+
     let updated;
     if (existing) {
       updated = await prisma.themeConfig.update({
         where: { id: existing.id },
         data: {
-          primaryColor: body.primaryColor,
-          secondaryColor: body.secondaryColor,
-          fontHeading: body.fontHeading,
-          fontBody: body.fontBody,
+          primaryColor: typeof body.primaryColor === 'string' ? body.primaryColor : existing.primaryColor,
+          secondaryColor: typeof body.secondaryColor === 'string' ? body.secondaryColor : existing.secondaryColor,
+          fontHeading: typeof body.fontHeading === 'string' ? body.fontHeading : existing.fontHeading,
+          fontBody: typeof body.fontBody === 'string' ? body.fontBody : existing.fontBody,
         },
       });
     } else {
       const settings = await getWebsiteSettings();
-      const { agency, author } = await getOrCreateAgencyAndUser();
+      const resolvedAgencyId = await resolveAgencyId(actor.agencyId);
       updated = await prisma.themeConfig.create({
         data: {
           websiteName: settings.siteName || 'Government Agency Portal',
-          primaryColor: body.primaryColor || settings.primaryColor || '#1d4ed8',
-          secondaryColor: body.secondaryColor || settings.secondaryColor || '#7c3aed',
-          fontHeading: body.fontHeading || 'Inter',
-          fontBody: body.fontBody || 'Inter',
+          primaryColor: typeof body.primaryColor === 'string' ? body.primaryColor : settings.primaryColor || '#1d4ed8',
+          secondaryColor: typeof body.secondaryColor === 'string' ? body.secondaryColor : settings.secondaryColor || '#7c3aed',
+          fontHeading: typeof body.fontHeading === 'string' ? body.fontHeading : 'Inter',
+          fontBody: typeof body.fontBody === 'string' ? body.fontBody : 'Inter',
           isActive: true,
-          agencyId: agency.id,
-          authorId: author.id,
+          agencyId: resolvedAgencyId,
+          authorId: actor.id,
         },
       });
     }
+
+    await writeAuditLog({
+      actor,
+      request,
+      action: 'THEME_CHANGED',
+      entityType: 'ThemeConfig',
+      entityId: updated.id,
+      metadata: {
+        agencyId: updated.agencyId,
+      },
+    });
+
     return NextResponse.json(updated);
   } catch (error: any) {
+    if (error instanceof AuthError || error instanceof AuthConfigurationError) {
+      return NextResponse.json({ message: error.message }, { status: error.status ?? 500 });
+    }
+
     console.error('[API_ERROR] POST /api/v1/theme:', error);
     return NextResponse.json({ message: error?.message || 'Failed to update theme' }, { status: 500 });
   }

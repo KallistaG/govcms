@@ -31,9 +31,9 @@ export class AuthError extends Error {
   }
 }
 
-export class AuthConfigurationError extends Error {
+export class AuthConfigurationError extends AuthError {
   constructor(message: string) {
-    super(message);
+    super(message, 500);
     this.name = 'AuthConfigurationError';
   }
 }

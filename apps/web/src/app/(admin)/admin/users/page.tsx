@@ -60,18 +60,27 @@ export default function UserManagementPage() {
 
   const handleUserFormSubmit = async (formData: Partial<UserData> & { password?: string }) => {
     if (editingUser) {
-      await updateUserMutation.mutateAsync({ id: editingUser.id, data: formData });
+      const updated: any = await updateUserMutation.mutateAsync({ id: editingUser.id, data: formData });
       toast.success(`Updated staff profile for ${formData.firstName} ${formData.lastName}`);
+      if (updated?.temporaryPassword) {
+        toast.info(`Temporary password: ${updated.temporaryPassword}`);
+      }
     } else {
-      await createUserMutation.mutateAsync(formData);
+      const created: any = await createUserMutation.mutateAsync(formData);
       toast.success(`Created new user account for ${formData.email}`);
+      if (created?.temporaryPassword) {
+        toast.info(`Temporary password: ${created.temporaryPassword}`);
+      }
     }
   };
 
   const handleResetPassword = async (user: UserData) => {
     if (confirm(`Reset security password for ${user.firstName} ${user.lastName} (${user.email})?`)) {
-      await resetPasswordMutation.mutateAsync({ id: user.id });
+      const result: any = await resetPasswordMutation.mutateAsync({ id: user.id });
       toast.info(`Password reset instructions issued for ${user.email}`);
+      if (result?.temporaryPassword) {
+        toast.info(`Temporary password: ${result.temporaryPassword}`);
+      }
     }
   };
 
