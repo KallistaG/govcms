@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import { prisma } from './client';
 
 async function main() {
@@ -21,8 +22,12 @@ async function main() {
     process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEMO_SEED === 'true';
 
   if (allowDemoSeed) {
-    // Demo accounts are only available for local development when explicitly enabled.
-    const defaultPasswordHash = '$2b$10$w8T0M4j6lX3kG0Z/h2i3.u5E90j/A9bE1mX9F5K6L7M8N9O0P1Q2R';
+    const demoPassword = process.env.DEMO_ADMIN_PASSWORD?.trim();
+    if (!demoPassword || demoPassword.length < 12) {
+      throw new Error('DEMO_ADMIN_PASSWORD must be set and contain at least 12 characters when ALLOW_DEMO_SEED=true');
+    }
+
+    const defaultPasswordHash = await bcrypt.hash(demoPassword, 10);
     const initialUsers = [
       {
         email: 'superadmin@gov.ph',
