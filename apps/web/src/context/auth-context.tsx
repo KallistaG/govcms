@@ -1,23 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { UserProfile, UserRole } from '../types/auth';
+import { UserProfile } from '../types/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 const ACCESS_TOKEN_KEY = 'govcms_access_token';
 const REFRESH_TOKEN_KEY = 'govcms_refresh_token';
 const REMEMBER_KEY = 'govcms_remember_me';
 const USER_PROFILE_KEY = 'govcms_user_profile';
-
-const DEFAULT_ADMIN: UserProfile = {
-  id: 'usr-admin',
-  email: 'admin@gov.ph',
-  firstName: 'Agency',
-  lastName: 'Administrator',
-  role: 'ADMINISTRATOR',
-  department: 'Public Information Office',
-  agency: { id: 'dict-1', name: 'Department of Information & Communications Technology', code: 'DICT' },
-};
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -26,7 +16,7 @@ interface AuthContextType {
   error: string | null;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>;
   logout: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<{ message: string; resetToken?: string; resetUrl?: string }>;
+  forgotPassword: (email: string) => Promise<{ message: string; resetUrl?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ message: string }>;
   clearError: () => void;
 }
@@ -58,19 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem(ACCESS_TOKEN_KEY, accessToken);
     storage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-
-    document.cookie = `govcms_access_token=${accessToken}; path=/; max-age=604800; SameSite=Lax`;
-  };
-
-  const getCachedProfile = (): UserProfile | null => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = localStorage.getItem(USER_PROFILE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch {
-      // fallback
-    }
-    return null;
   };
 
   const clearTokens = () => {
@@ -81,27 +58,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(USER_PROFILE_KEY);
     sessionStorage.removeItem(ACCESS_TOKEN_KEY);
     sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-    document.cookie = 'govcms_access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   };
 
   React.useEffect(() => {
     const initializeAuth = async () => {
       setIsLoading(true);
       const { accessToken } = getTokens();
-      const cached = getCachedProfile();
 
-      if (!accessToken && !cached) {
+      if (!accessToken) {
         setIsLoading(false);
         return;
       }
 
-      const activeToken = accessToken || 'govcms_session_token_active';
-      const activeProfile = cached || DEFAULT_ADMIN;
-      setUser(activeProfile);
-
       try {
         const res = await fetch(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${activeToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
 
         if (res.ok) {
@@ -110,9 +81,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (typeof window !== 'undefined') {
             localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
           }
+        } else {
+          setUser(null);
         }
       } catch {
-        // Keep cached user active
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -143,32 +116,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      const token = data.accessToken || 'govcms_token_' + Date.now();
-      const userObj: UserProfile = data.user || {
-        id: 'usr-' + Date.now(),
-        email: cleanEmail,
-        firstName: 'Agency',
-        lastName: 'Administrator',
-        role: 'ADMINISTRATOR',
-      };
+      if (!data.accessToken || !data.user) {
+        setError('Authentication response invalid');
+        setUser(null);
+        setIsLoading(false);
+        return false;
+      }
 
-      setTokensAndProfile(token, data.refreshToken || token, userObj, rememberMe);
-      setUser(userObj);
+      setTokensAndProfile(data.accessToken, data.refreshToken || data.accessToken, data.user, rememberMe);
+      setUser(data.user);
       setIsLoading(false);
       return true;
     } catch {
-      const fallbackUser: UserProfile = {
-        id: `usr-${cleanEmail.split('@')[0]}`,
-        email: cleanEmail,
-        firstName: cleanEmail.startsWith('superadmin') ? 'Super' : cleanEmail.startsWith('admin') ? 'Agency' : cleanEmail.startsWith('editor') ? 'Maria' : 'Juan',
-        lastName: cleanEmail.startsWith('superadmin') ? 'Admin' : cleanEmail.startsWith('admin') ? 'Administrator' : cleanEmail.startsWith('editor') ? 'Santos' : 'Publisher',
-        role: cleanEmail.startsWith('superadmin') ? 'SUPER_ADMIN' : cleanEmail.startsWith('admin') ? 'ADMINISTRATOR' : cleanEmail.startsWith('editor') ? 'EDITOR' : 'PUBLISHER',
-      };
-      const fallbackToken = `govcms_session_${Date.now()}`;
-      setTokensAndProfile(fallbackToken, fallbackToken, fallbackUser, rememberMe);
-      setUser(fallbackUser);
+      setError('Authentication service unavailable');
+      setUser(null);
       setIsLoading(false);
-      return true;
+      return false;
     }
   };
 
@@ -207,17 +170,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return data;
     } catch {
-      const rawToken = 'demo-reset-token-12345';
-      return {
-        message: 'Password reset instructions have been issued.',
-        resetToken: rawToken,
-        resetUrl: `/admin/reset-password?token=${rawToken}`,
-      };
+      const message = 'Failed to submit password reset request';
+      setError(message);
+      throw new Error(message);
     }
   };
 
   const resetPassword = async (token: string, newPassword: string) => {
     setError(null);
+    if (!token) {
+      const message = 'Reset token is required';
+      setError(message);
+      throw new Error(message);
+    }
     try {
       const res = await fetch(`${API_URL}/auth/reset-password`, {
         method: 'POST',
@@ -231,7 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return data;
     } catch {
-      return { message: 'Password reset successfully. You can now log in with your new credentials.' };
+      throw new Error('Failed to reset password');
     }
   };
 

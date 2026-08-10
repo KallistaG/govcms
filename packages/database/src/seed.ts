@@ -17,50 +17,56 @@ async function main() {
 
   console.log('✅ Agency Ready:', agency.name);
 
-  // Default hashed password for demo users: Password123!
-  const defaultPasswordHash = '$2b$10$w8T0M4j6lX3kG0Z/h2i3.u5E90j/A9bE1mX9F5K6L7M8N9O0P1Q2R';
+  const allowDemoSeed =
+    process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEMO_SEED === 'true';
 
-  const initialUsers = [
-    {
-      email: 'superadmin@gov.ph',
-      firstName: 'Super',
-      lastName: 'Admin',
-      role: 'SUPER_ADMIN' as const,
-    },
-    {
-      email: 'admin@gov.ph',
-      firstName: 'Agency',
-      lastName: 'Administrator',
-      role: 'ADMINISTRATOR' as const,
-    },
-    {
-      email: 'editor@gov.ph',
-      firstName: 'Content',
-      lastName: 'Editor',
-      role: 'EDITOR' as const,
-    },
-    {
-      email: 'publisher@gov.ph',
-      firstName: 'Official',
-      lastName: 'Publisher',
-      role: 'PUBLISHER' as const,
-    },
-  ];
-
-  for (const u of initialUsers) {
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
-      update: { role: u.role },
-      create: {
-        email: u.email,
-        passwordHash: defaultPasswordHash,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        role: u.role,
-        agencyId: agency.id,
+  if (allowDemoSeed) {
+    // Demo accounts are only available for local development when explicitly enabled.
+    const defaultPasswordHash = '$2b$10$w8T0M4j6lX3kG0Z/h2i3.u5E90j/A9bE1mX9F5K6L7M8N9O0P1Q2R';
+    const initialUsers = [
+      {
+        email: 'superadmin@gov.ph',
+        firstName: 'Super',
+        lastName: 'Admin',
+        role: 'SUPER_ADMIN' as const,
       },
-    });
-    console.log(`✅ Seeded User [${user.role}]:`, user.email);
+      {
+        email: 'admin@gov.ph',
+        firstName: 'Agency',
+        lastName: 'Administrator',
+        role: 'ADMINISTRATOR' as const,
+      },
+      {
+        email: 'editor@gov.ph',
+        firstName: 'Content',
+        lastName: 'Editor',
+        role: 'EDITOR' as const,
+      },
+      {
+        email: 'publisher@gov.ph',
+        firstName: 'Official',
+        lastName: 'Publisher',
+        role: 'PUBLISHER' as const,
+      },
+    ];
+
+    for (const u of initialUsers) {
+      const user = await prisma.user.upsert({
+        where: { email: u.email },
+        update: { role: u.role },
+        create: {
+          email: u.email,
+          passwordHash: defaultPasswordHash,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          role: u.role,
+          agencyId: agency.id,
+        },
+      });
+      console.log(`✅ Seeded User [${user.role}]:`, user.email);
+    }
+  } else {
+    console.log('ℹ️ Demo seed users skipped. Set ALLOW_DEMO_SEED=true in non-production to create them.');
   }
 
   console.log('✨ GovCMS Role & User Seeding Complete.');

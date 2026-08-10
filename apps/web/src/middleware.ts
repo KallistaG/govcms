@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { AUTH_COOKIE_NAME } from './lib/auth-constants';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect /admin routes (except /admin/login and /admin/reset-password)
   if (
     pathname.startsWith('/admin') &&
     !pathname.startsWith('/admin/login') &&
     !pathname.startsWith('/admin/reset-password')
   ) {
-    const token =
-      request.cookies.get('govcms_access_token')?.value ||
-      request.headers.get('authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
     if (!token) {
-      // Let client-side ProtectedRoute handle redirect if token is in localStorage
-      return NextResponse.next();
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = '/admin/login';
+      loginUrl.search = '';
+      return NextResponse.redirect(loginUrl);
     }
   }
 

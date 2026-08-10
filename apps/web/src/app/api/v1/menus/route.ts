@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@govcms/database';
+import { MenuLocationEnum, prisma } from '@govcms/database';
 import { getOrBootstrapAgency } from '@/lib/agency-bootstrap';
+import { AuthError, AuthConfigurationError, requireAuth } from '@/lib/server-auth';
+import { requireAgencyScopedAccess, requireMenuManageAccess } from '@/lib/cms-access';
+import { writeAuditLog } from '@/lib/audit';
 
-async function getOrCreateAgencyAndUser() {
-  const agency = await getOrBootstrapAgency();
-  let user = await prisma.user.findFirst();
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        email: 'admin@gov.ph',
-        passwordHash: '',
-        firstName: 'Agency',
-        lastName: 'Administrator',
-        role: 'ADMINISTRATOR',
-      },
-    });
+async function resolveAgencyId(actor: { role: string; agencyId: string | null }): Promise<string> {
+  if (actor.role === 'SUPER_ADMIN') {
+    if (actor.agencyId?.trim()) {
+      return actor.agencyId.trim();
+    }
+
+    const agency = await getOrBootstrapAgency();
+    return agency.id;
   }
-  return { agency, user };
+
+  return requireAgencyScopedAccess(actor as any) as string;
 }
 
 export async function GET(request: Request) {
@@ -24,31 +23,45 @@ export async function GET(request: Request) {
   const locationInput = searchParams.get('location') || 'HEADER_MENU';
 
   const locUpper = locationInput.toUpperCase();
-  let location: any = 'HEADER_MENU';
+  let location: MenuLocationEnum = 'HEADER_MENU';
   if (locUpper.includes('FOOTER')) location = 'FOOTER_MENU';
   if (locUpper.includes('SIDEBAR')) location = 'SIDEBAR_MENU';
 
   try {
-    let menu = await prisma.menu.findFirst({
-      where: { location },
+    const actor = requireMenuManageAccess(await requireAuth(request));
+    const agencyId = requireAgencyScopedAccess(actor);
+    let menu: any = await prisma.menu.findFirst({
+      where: {
+        location,
+        ...(agencyId ? { agencyId } : {}),
+      },
       include: { items: { orderBy: { order: 'asc' } } },
     });
 
     if (!menu) {
-      const { agency, user } = await getOrCreateAgencyAndUser();
+      const resolvedAgencyId = await resolveAgencyId(actor);
       menu = await prisma.menu.create({
         data: {
           name: `${location.replace('_', ' ')}`,
           code: `${location.toLowerCase()}-${Date.now()}`,
           location,
-          agencyId: agency.id,
-          createdById: user.id,
+          agencyId: resolvedAgencyId,
+          createdById: actor.id,
         },
         include: { items: true },
       });
+
+      await writeAuditLog({
+        actor,
+        request,
+        action: 'MENU_CREATED',
+        entityType: 'Menu',
+        entityId: menu.id,
+        metadata: { agencyId: menu.agencyId, location: menu.location },
+      });
     }
 
-    const buildTree = (items: any[], parentId: string | null = null): any[] => {
+      const buildTree = (items: any[], parentId: string | null = null): any[] => {
       return items
         .filter((item) => item.parentId === parentId)
         .sort((a, b) => a.order - b.order)
@@ -67,7 +80,11 @@ export async function GET(request: Request) {
       items: menu.items || [],
       tree,
     });
-  } catch {
+  } catch (error: any) {
+    if (error instanceof AuthError || error instanceof AuthConfigurationError) {
+      return NextResponse.json({ message: error.message }, { status: error.status ?? 500 });
+    }
+
     return NextResponse.json({
       id: `menu-${location.toLowerCase()}`,
       name: location.replace('_', ' '),
