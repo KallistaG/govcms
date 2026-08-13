@@ -3,6 +3,16 @@ import { prisma } from '@govcms/database';
 import { AuthError, AuthConfigurationError, requireAuth } from '@/lib/server-auth';
 import { getScopedAgencyId, requireDashboardLoginsAccess } from '@/lib/admin-rbac';
 
+function getDisplayName(user?: { firstName?: string | null; lastName?: string | null } | null) {
+  const name = [user?.firstName, user?.lastName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  return name || 'Unknown user';
+}
+
 export async function GET(request: Request) {
   try {
     const actor = requireDashboardLoginsAccess(await requireAuth(request));
@@ -15,12 +25,12 @@ export async function GET(request: Request) {
 
     const formatted = users.map((u) => ({
       id: u.id,
-      userName: `${u.firstName} ${u.lastName}`,
-      userEmail: u.email,
-      role: u.role,
-      ipAddress: '192.168.1.100',
-      loginTime: u.lastLoginAt || u.updatedAt,
-      status: u.isActive ? 'Active' : 'Suspended',
+      userName: getDisplayName(u),
+      userEmail: u.email || 'Unknown email',
+      role: u.role || 'UNKNOWN',
+      ipAddress: 'Unknown IP',
+      timestamp: (u.lastLoginAt || u.updatedAt).toISOString(),
+      status: u.isActive ? 'SUCCESS' : 'FAILED',
     }));
 
     return NextResponse.json(formatted);

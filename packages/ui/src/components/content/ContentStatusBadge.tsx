@@ -12,7 +12,7 @@ export const ContentStatusBadge: React.FC<ContentStatusBadgeProps> = ({ status }
     case 'APPROVED':
       return <Badge variant="secondary">Approved</Badge>;
     case 'PENDING_REVIEW':
-      return <Badge variant="warning">Under Review</Badge>;
+      return <Badge variant="warning">In Review</Badge>;
     case 'DRAFT':
       return <Badge variant="outline">Draft</Badge>;
     case 'ARCHIVED':

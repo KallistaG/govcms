@@ -2,15 +2,15 @@ import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../ui/table';
 import { Badge } from '../ui/badge';
-import { KeyRound, ShieldAlert } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 
 export interface LoginSessionItem {
   id: string;
-  userEmail: string;
-  role: string;
-  ipAddress: string;
-  timestamp: string;
-  status: 'SUCCESS' | 'FAILED';
+  userEmail?: string | null;
+  role?: string | null;
+  ipAddress?: string | null;
+  timestamp?: string | Date | null;
+  status?: 'SUCCESS' | 'FAILED' | string | null;
 }
 
 export interface RecentLoginsWidgetProps {
@@ -24,6 +24,15 @@ export const RecentLoginsWidget: React.FC<RecentLoginsWidgetProps> = ({
   title = 'Recent User Logins',
   description = 'Security audit log of recent user access attempts.',
 }) => {
+  const formatTimestamp = (value?: string | Date | null) => {
+    if (!value) return 'Unknown time';
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown time';
+
+    return date.toLocaleString();
+  };
+
   return (
     <Card className="border-border/80">
       <CardHeader className="pb-3">
@@ -58,18 +67,18 @@ export const RecentLoginsWidget: React.FC<RecentLoginsWidgetProps> = ({
               sessions.map((session) => (
                 <TableRow key={session.id}>
                   <TableCell className="font-semibold text-foreground truncate max-w-[150px]">
-                    {session.userEmail}
+                    {session.userEmail?.trim() || 'Unknown user'}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px] font-mono">
-                      {session.role}
+                      {session.role?.trim() || 'Unknown role'}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-muted-foreground text-[11px]">
-                    {session.ipAddress}
+                    {session.ipAddress?.trim() || 'Unknown IP'}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground font-mono text-[11px]">
-                    {session.timestamp}
+                    {formatTimestamp(session.timestamp)}
                   </TableCell>
                 </TableRow>
               ))

@@ -29,20 +29,34 @@ import {
   Label,
   Badge,
 } from '@govcms/ui';
+import { useAuth } from '../../../../context/auth-context';
+import { AdminAccessState } from '../../../../components/auth/admin-access-state';
+import { canEditHomepage } from '../../../../lib/admin-permissions';
 
 export default function PagesBlockBuilderPage() {
+  const { user } = useAuth();
   const [selectedSlug, setSelectedSlug] = React.useState('about');
   const { data: initialBlocks = [], isLoading } = usePageBlocks(selectedSlug);
   const saveMutation = useSavePageBlocks();
 
   const [blocks, setBlocks] = React.useState<PageBlock[]>([]);
   const [hasChanges, setHasChanges] = React.useState(false);
+  const canEdit = canEditHomepage(user);
 
   React.useEffect(() => {
     if (initialBlocks.length > 0 && !hasChanges) {
       setBlocks(initialBlocks);
     }
   }, [initialBlocks, hasChanges]);
+
+  if (!canEdit) {
+    return (
+      <AdminAccessState
+        title="Page builder restricted"
+        message="You do not have permission to edit custom page blocks."
+      />
+    );
+  }
 
   const handleAddBlock = (type: BlockType) => {
     const meta = BLOCK_TYPE_META[type];

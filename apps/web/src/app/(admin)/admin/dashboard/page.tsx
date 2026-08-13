@@ -25,21 +25,41 @@ import {
   useRecentLogins,
   useLatestFiles,
 } from '../../../../hooks/use-dashboard';
+import { useAuth } from '../../../../context/auth-context';
+import {
+  canCreateContent,
+  canPublishContent,
+  canManageUsers,
+  canReadAuditLogs,
+  canManageSettings,
+} from '../../../../lib/admin-permissions';
 
 export default function CMSDashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { data: stats } = useDashboardStats();
   const { data: activities } = useRecentActivity();
   const { data: newsItems } = useLatestNews();
   const { data: recentLogins } = useRecentLogins();
   const { data: latestFiles } = useLatestFiles();
 
+  const safeActivities = Array.isArray(activities) ? activities : [];
+  const safeNewsItems = Array.isArray(newsItems) ? newsItems : [];
+  const safeRecentLogins = Array.isArray(recentLogins) ? recentLogins : [];
+  const safeLatestFiles = Array.isArray(latestFiles) ? latestFiles : [];
+
+  const canCreatePage = canCreateContent(user);
+  const canPublishNews = canPublishContent(user);
+  const canAddUser = canManageUsers(user);
+  const canViewAudit = canReadAuditLogs(user);
+  const canOpenSettings = canManageSettings(user);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
           title="Total Pages"
-          value={stats?.totalPages ?? 14}
+          value={stats?.totalPages ?? 0}
           icon={FileText}
           change="+2 this week"
           changeType="positive"
@@ -50,7 +70,7 @@ export default function CMSDashboardPage() {
 
         <StatCard
           title="News & Releases"
-          value={stats?.totalNews ?? 28}
+          value={stats?.totalNews ?? 0}
           icon={Newspaper}
           change="+5 this month"
           changeType="positive"
@@ -61,7 +81,7 @@ export default function CMSDashboardPage() {
 
         <StatCard
           title="Active Users"
-          value={stats?.totalUsers ?? 8}
+          value={stats?.totalUsers ?? 0}
           icon={Users}
           change="4 Roles"
           changeType="neutral"
@@ -72,16 +92,16 @@ export default function CMSDashboardPage() {
 
         <StatCard
           title="Storage Quota"
-          value={`${stats?.storage?.usedGB ?? 14.2} GB`}
+          value={`${stats?.storage?.usedGB ?? 0} GB`}
           icon={HardDrive}
-          progress={stats?.storage?.percentage ?? 28}
+          progress={stats?.storage?.percentage ?? 0}
           iconBgColor="bg-purple-500/10"
           iconColor="text-purple-600 dark:text-purple-400"
         />
 
         <StatCard
           title="Draft Content"
-          value={stats?.drafts ?? 5}
+          value={stats?.drafts ?? 0}
           icon={FileEdit}
           change="Needs Review"
           changeType="neutral"
@@ -92,7 +112,7 @@ export default function CMSDashboardPage() {
 
         <StatCard
           title="Published Items"
-          value={stats?.published ?? 32}
+          value={stats?.published ?? 0}
           icon={Globe}
           change="100% Live"
           changeType="positive"
@@ -104,27 +124,32 @@ export default function CMSDashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <QuickActionsWidget
-            onCreatePage={() => router.push('/admin/pages')}
-            onPublishNews={() => router.push('/admin/news')}
-            onAddUser={() => router.push('/admin/users')}
-            onViewAudit={() => router.push('/admin/reports/audit-logs')}
-            onOpenSettings={() => router.push('/admin/settings/general')}
-          />
+        <QuickActionsWidget
+          canCreatePage={canCreatePage}
+          canPublishNews={canPublishNews}
+          canAddUser={canAddUser}
+          canViewAudit={canViewAudit}
+          canOpenSettings={canOpenSettings}
+          onCreatePage={() => router.push('/admin/pages')}
+          onPublishNews={() => router.push('/admin/news')}
+          onAddUser={() => router.push('/admin/users')}
+          onViewAudit={() => router.push('/admin/reports/audit-logs')}
+          onOpenSettings={() => router.push('/admin/settings/general')}
+        />
 
           <LatestNewsWidget
-            newsItems={newsItems ?? []}
+            newsItems={safeNewsItems}
             onViewAll={() => router.push('/admin/news')}
           />
 
-          <RecentFilesWidget files={latestFiles ?? []} />
+          <RecentFilesWidget files={safeLatestFiles} />
         </div>
 
         <div className="space-y-6">
-          <ActivityFeed activities={activities ?? []} />
-          <RecentLoginsWidget sessions={recentLogins ?? []} />
-        </div>
+        <ActivityFeed activities={safeActivities} />
+        {canViewAudit && <RecentLoginsWidget sessions={safeRecentLogins} />}
       </div>
     </div>
+  </div>
   );
 }

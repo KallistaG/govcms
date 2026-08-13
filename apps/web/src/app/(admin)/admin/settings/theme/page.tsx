@@ -26,8 +26,12 @@ import {
   Input,
   Label,
 } from '@govcms/ui';
+import { useAuth } from '../../../../../context/auth-context';
+import { AdminAccessState } from '../../../../../components/auth/admin-access-state';
+import { canManageSettings } from '../../../../../lib/admin-permissions';
 
 export default function ThemeSettingsPage() {
+  const { user } = useAuth();
   const { data: initialTheme, isLoading } = useThemeConfig();
   const saveMutation = useSaveTheme();
   const publishMutation = usePublishTheme();
@@ -40,6 +44,15 @@ export default function ThemeSettingsPage() {
       setTheme(initialTheme);
     }
   }, [initialTheme, theme]);
+
+  if (!canManageSettings(user)) {
+    return (
+      <AdminAccessState
+        title="Theme settings restricted"
+        message="You do not have permission to manage theme settings."
+      />
+    );
+  }
 
   const update = (key: keyof ThemeConfig, value: unknown) => {
     if (!theme) return;

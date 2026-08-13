@@ -21,6 +21,7 @@ interface ContentModalProps {
   onSubmit: (data: Partial<ContentItem>) => Promise<void>;
   initialData?: ContentItem | null;
   defaultType?: string;
+  canPublishContent?: boolean;
 }
 
 export const ContentModal: React.FC<ContentModalProps> = ({
@@ -29,6 +30,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
   onSubmit,
   initialData,
   defaultType = 'PAGE_DOCUMENT',
+  canPublishContent = true,
 }) => {
   const [title, setTitle] = React.useState('');
   const [summary, setSummary] = React.useState('');
@@ -40,6 +42,26 @@ export const ContentModal: React.FC<ContentModalProps> = ({
   const [eventDate, setEventDate] = React.useState('');
   const [location, setLocation] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const statusOptions = React.useMemo(() => {
+    const options = [
+      { value: 'DRAFT', label: 'Draft' },
+      { value: 'PENDING_REVIEW', label: 'In Review' },
+      { value: 'ARCHIVED', label: 'Archived' },
+    ];
+
+    if (canPublishContent) {
+      options.splice(2, 0, { value: 'PUBLISHED', label: 'Published' });
+    } else if (status === 'PUBLISHED') {
+      options.splice(2, 0, { value: 'PUBLISHED', label: 'Published (read only)' });
+    }
+
+    if (status === 'APPROVED') {
+      options.splice(2, 0, { value: 'APPROVED', label: 'Approved' });
+    }
+
+    return options;
+  }, [canPublishContent, status]);
 
   React.useEffect(() => {
     if (initialData) {
@@ -83,6 +105,13 @@ export const ContentModal: React.FC<ContentModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  const submitLabel =
+    status === 'PUBLISHED'
+      ? 'Publish Content Document'
+      : status === 'PENDING_REVIEW'
+      ? 'Submit for Review'
+      : 'Save Draft';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
@@ -142,11 +171,11 @@ export const ContentModal: React.FC<ContentModalProps> = ({
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ContentItem['status'])}
               >
-                <option value="DRAFT">Draft</option>
-                <option value="PENDING_REVIEW">Pending Review</option>
-                <option value="APPROVED">Approved</option>
-                <option value="PUBLISHED">Published</option>
-                <option value="ARCHIVED">Archived</option>
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value} disabled={option.value === 'PUBLISHED' && !canPublishContent}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -205,7 +234,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving Document...
                 </>
               ) : (
-                'Save Content Document'
+                submitLabel
               )}
             </Button>
           </CardFooter>

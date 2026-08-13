@@ -47,28 +47,42 @@ import {
   CardContent,
   Badge,
 } from '@govcms/ui';
+import { useAuth } from '../../../../../context/auth-context';
+import { AdminAccessState } from '../../../../../components/auth/admin-access-state';
+import { canEditHomepage, canPublishHomepage } from '../../../../../lib/admin-permissions';
 
 const SECTION_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Sparkles, Images, Newspaper, LayoutGrid, Image: ImageIcon, BarChart3, Mail, MapPin, PanelBottom,
 };
 
 export default function HomepageBuilderPage() {
+  const { user } = useAuth();
   const { data: initialSections = [], isLoading } = useHomepageSections();
   const { data: siteSettings } = useSiteSettings();
   const saveMutation = useSaveHomepageSections();
   const publishMutation = usePublishHomepage();
-
   const [sections, setSections] = React.useState<HomepageSection[]>([]);
   const [hasChanges, setHasChanges] = React.useState(false);
   const [showAddPanel, setShowAddPanel] = React.useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
   const [viewport, setViewport] = React.useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const canEdit = canEditHomepage(user);
+  const canPublish = canPublishHomepage(user);
 
   React.useEffect(() => {
     if (initialSections.length > 0 && !hasChanges) {
       setSections(initialSections);
     }
   }, [initialSections, hasChanges]);
+
+  if (!canEdit) {
+    return (
+      <AdminAccessState
+        title="Homepage builder restricted"
+        message="You do not have permission to edit the homepage layout."
+      />
+    );
+  }
 
   const handleAddSection = (type: SectionType) => {
     const meta = SECTION_TYPE_META[type];
@@ -146,9 +160,11 @@ export default function HomepageBuilderPage() {
           <Button variant="outline" size="sm" onClick={handleSave} disabled={!hasChanges} className="gap-1 font-semibold text-xs">
             <Save className="h-4 w-4" /> Save Draft
           </Button>
-          <Button size="sm" onClick={handlePublish} className="font-bold gap-1 shadow-xs bg-emerald-600 hover:bg-emerald-700 text-xs">
-            <Send className="h-4 w-4" /> Publish Live
-          </Button>
+          {canPublish && (
+            <Button size="sm" onClick={handlePublish} className="font-bold gap-1 shadow-xs bg-emerald-600 hover:bg-emerald-700 text-xs">
+              <Send className="h-4 w-4" /> Publish Live
+            </Button>
+          )}
         </div>
       </div>
 
@@ -290,9 +306,11 @@ export default function HomepageBuilderPage() {
                 <Button variant="outline" className="w-full font-bold text-xs gap-1" onClick={() => setIsPreviewOpen(true)}>
                   <Eye className="h-4 w-4 text-primary" /> Open Live Preview
                 </Button>
-                <Button className="w-full font-bold text-xs bg-emerald-600 hover:bg-emerald-700" onClick={handlePublish}>
-                  Publish Live Configuration
-                </Button>
+                {canPublish && (
+                  <Button className="w-full font-bold text-xs bg-emerald-600 hover:bg-emerald-700" onClick={handlePublish}>
+                    Publish Live Configuration
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

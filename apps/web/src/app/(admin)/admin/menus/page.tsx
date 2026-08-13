@@ -12,8 +12,12 @@ import { MenuTreeBuilder } from '../../../../components/menus/menu-tree-builder'
 import { MenuItemModal } from '../../../../components/menus/menu-item-modal';
 import { Menu as MenuIcon, Plus, Globe, Shield, Layout, Layers } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@govcms/ui';
+import { useAuth } from '../../../../context/auth-context';
+import { AdminAccessState } from '../../../../components/auth/admin-access-state';
+import { canManageMenus } from '../../../../lib/admin-permissions';
 
 export default function MenuBuilderPage() {
+  const { user } = useAuth();
   const [activeLocation, setActiveLocation] = React.useState<
     'HEADER_MENU' | 'FOOTER_MENU' | 'SIDEBAR_MENU'
   >('HEADER_MENU');
@@ -27,6 +31,15 @@ export default function MenuBuilderPage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingItem, setEditingItem] = React.useState<MenuItemData | null>(null);
   const [activeParentId, setActiveParentId] = React.useState<string | null>(null);
+
+  if (!canManageMenus(user)) {
+    return (
+      <AdminAccessState
+        title="Menu builder restricted"
+        message="You do not have permission to manage navigation menus."
+      />
+    );
+  }
 
   const handleAddRootItem = () => {
     setEditingItem(null);

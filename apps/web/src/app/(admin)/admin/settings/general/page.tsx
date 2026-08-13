@@ -33,8 +33,12 @@ import {
   Input,
   Label,
 } from '@govcms/ui';
+import { useAuth } from '../../../../../context/auth-context';
+import { AdminAccessState } from '../../../../../components/auth/admin-access-state';
+import { canManageSettings } from '../../../../../lib/admin-permissions';
 
 export default function GeneralSettingsPage() {
+  const { user } = useAuth();
   const { data: initialSettings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSettings();
 
@@ -47,6 +51,15 @@ export default function GeneralSettingsPage() {
       setSettings(initialSettings);
     }
   }, [initialSettings, settings]);
+
+  if (!canManageSettings(user)) {
+    return (
+      <AdminAccessState
+        title="Settings restricted"
+        message="You do not have permission to manage website settings."
+      />
+    );
+  }
 
   const update = (key: keyof SiteSettingsData, value: unknown) => {
     if (!settings) return;

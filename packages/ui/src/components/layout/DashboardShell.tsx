@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Header, HeaderProps } from './Header';
-import { Sidebar, SidebarProps } from './Sidebar';
+import { Sidebar, SidebarProps, MenuItem } from './Sidebar';
 import { ChevronRight, Home } from 'lucide-react';
 
 export interface BreadcrumbItem {
@@ -11,6 +11,7 @@ export interface BreadcrumbItem {
 export interface DashboardShellProps {
   headerProps?: Partial<HeaderProps>;
   sidebarProps?: Partial<SidebarProps>;
+  sidebarItems?: MenuItem[];
   breadcrumbs?: BreadcrumbItem[];
   title?: string;
   description?: string;
@@ -21,6 +22,7 @@ export interface DashboardShellProps {
 export const DashboardShell: React.FC<DashboardShellProps> = ({
   headerProps,
   sidebarProps,
+  sidebarItems,
   breadcrumbs = [{ label: 'Dashboard', href: '/dashboard' }],
   title = 'Government Administration Dashboard',
   description = 'Manage official government press releases, notices, agency assets, and system configurations.',
@@ -39,6 +41,7 @@ export const DashboardShell: React.FC<DashboardShellProps> = ({
           onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
           isMobileOpen={isMobileOpen}
           onCloseMobile={() => setIsMobileOpen(false)}
+          items={sidebarItems}
           {...sidebarProps}
         />
 

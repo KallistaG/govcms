@@ -6,11 +6,11 @@ import { Newspaper, ExternalLink } from 'lucide-react';
 
 export interface NewsItem {
   id: string;
-  title: string;
-  category: string;
-  authorName: string;
-  status: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED';
-  publishedAt?: string;
+  title?: string | null;
+  category?: string | null;
+  authorName?: string | null;
+  status?: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED' | null;
+  publishedAt?: string | Date | null;
 }
 
 export interface LatestNewsWidgetProps {
@@ -26,8 +26,8 @@ export const LatestNewsWidget: React.FC<LatestNewsWidgetProps> = ({
   description = 'Recent public announcements and official press releases.',
   onViewAll,
 }) => {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (status?: string | null) => {
+    switch (status || 'DRAFT') {
       case 'PUBLISHED':
         return <Badge variant="success">Published</Badge>;
       case 'APPROVED':
@@ -37,8 +37,17 @@ export const LatestNewsWidget: React.FC<LatestNewsWidgetProps> = ({
       case 'DRAFT':
         return <Badge variant="outline">Draft</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary">{status || 'Unknown'}</Badge>;
     }
+  };
+
+  const formatDate = (value?: string | Date | null) => {
+    if (!value) return 'N/A';
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+
+    return date.toLocaleDateString();
   };
 
   return (
@@ -69,29 +78,38 @@ export const LatestNewsWidget: React.FC<LatestNewsWidgetProps> = ({
               <TableHead>Article Title</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Author</TableHead>
               <TableHead className="text-right">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {newsItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                   No news items available.
                 </TableCell>
               </TableRow>
             ) : (
-              newsItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-semibold text-foreground max-w-[200px] truncate sm:max-w-[300px]">
-                    {item.title}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{item.category}</TableCell>
-                  <TableCell>{getStatusBadge(item.status)}</TableCell>
-                  <TableCell className="text-right font-mono text-muted-foreground">
-                    {item.publishedAt || 'N/A'}
-                  </TableCell>
-                </TableRow>
-              ))
+              newsItems.map((item) => {
+                const title = item.title?.trim() || 'Untitled item';
+                const category = item.category?.trim() || 'Uncategorized';
+                const authorName = item.authorName?.trim() || 'Unknown user';
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-semibold text-foreground max-w-[200px] truncate sm:max-w-[300px]">
+                      {title}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{category}</TableCell>
+                    <TableCell>{getStatusBadge(item.status)}</TableCell>
+                    <TableCell className="text-muted-foreground text-[11px]">
+                      <span className="block truncate">By {authorName}</span>
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">
+                      {formatDate(item.publishedAt)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
