@@ -3,6 +3,16 @@ import { prisma } from '@govcms/database';
 import { AuthError, AuthConfigurationError, requireAuth } from '@/lib/server-auth';
 import { getScopedAgencyId, requireDashboardAccess } from '@/lib/admin-rbac';
 
+function getDisplayName(user?: { firstName?: string | null; lastName?: string | null } | null) {
+  const name = [user?.firstName, user?.lastName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+
+  return name || 'Unknown user';
+}
+
 export async function GET(request: Request) {
   try {
     const actor = requireDashboardAccess(await requireAuth(request));
@@ -19,11 +29,11 @@ export async function GET(request: Request) {
 
     const formatted = items.map((i) => ({
       id: i.id,
-      title: i.title,
-      slug: i.slug,
-      status: i.status,
-      author: i.author ? `${i.author.firstName} ${i.author.lastName}` : 'Official Desk',
-      date: i.createdAt,
+      title: i.title?.trim() || 'Untitled item',
+      category: i.type === 'PRESS_RELEASE' ? 'Press Release' : i.type || 'News',
+      authorName: getDisplayName(i.author),
+      status: i.status || 'DRAFT',
+      publishedAt: i.publishedAt ? i.publishedAt.toISOString() : undefined,
     }));
 
     return NextResponse.json(formatted);

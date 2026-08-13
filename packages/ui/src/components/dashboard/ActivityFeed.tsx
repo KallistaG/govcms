@@ -5,12 +5,12 @@ import { Activity, ShieldCheck, FileText, UserPlus, Globe, LogIn } from 'lucide-
 
 export interface ActivityItem {
   id: string;
-  userName: string;
+  userName?: string | null;
   userEmail?: string;
   userAvatar?: string;
-  action: string;
+  action?: string | null;
   target?: string;
-  timestamp: string;
+  timestamp?: string | Date | null;
   type?: 'login' | 'content' | 'user' | 'system';
 }
 
@@ -25,6 +25,43 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   title = 'Recent System Activity',
   description = 'Live timeline of administrative actions and content updates across agencies.',
 }) => {
+  const normalizeName = (item: ActivityItem) => {
+    const legacyUser = item as ActivityItem & {
+      user?: { name?: string | null; avatar?: string | null };
+      displayName?: string | null;
+    };
+
+    const name =
+      item.userName?.trim() ||
+      legacyUser.user?.name?.trim() ||
+      legacyUser.displayName?.trim() ||
+      'System';
+
+    return name || 'System';
+  };
+
+  const getInitials = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return 'SY';
+
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'SY';
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase() || 'SY';
+    }
+
+    return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase() || 'SY';
+  };
+
+  const formatTimestamp = (value?: string | Date | null) => {
+    if (!value) return 'Unknown time';
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown time';
+
+    return date.toLocaleString();
+  };
+
   const getActionIcon = (type?: string) => {
     switch (type) {
       case 'login':
@@ -33,6 +70,8 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         return <FileText className="h-3.5 w-3.5 text-amber-500" />;
       case 'user':
         return <UserPlus className="h-3.5 w-3.5 text-emerald-500" />;
+      case 'system':
+        return <ShieldCheck className="h-3.5 w-3.5 text-slate-500" />;
       default:
         return <Globe className="h-3.5 w-3.5 text-primary" />;
     }
@@ -65,23 +104,39 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                   {getActionIcon(item.type)}
                 </div>
 
-                <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarImage src={item.userAvatar} alt={item.userName} />
-                  <AvatarFallback>{item.userName.substring(0, 2)}</AvatarFallback>
-                </Avatar>
+                {(() => {
+                  const legacyUser = item as ActivityItem & {
+                    user?: { name?: string | null; avatar?: string | null };
+                    displayName?: string | null;
+                  };
+                  const displayName = normalizeName(item);
+                  const avatarSrc = item.userAvatar || legacyUser.user?.avatar || undefined;
+                  const avatarFallback = getInitials(displayName);
+                  const actionText = item.action?.trim() || 'performed an action';
+                  const targetText = item.target?.trim();
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-foreground">
-                    {item.userName}{' '}
-                    <span className="font-normal text-muted-foreground">{item.action}</span>
-                    {item.target && (
-                      <span className="font-semibold text-primary"> "{item.target}"</span>
-                    )}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                    {item.timestamp}
-                  </p>
-                </div>
+                  return (
+                    <>
+                      <Avatar className="h-7 w-7 shrink-0">
+                        <AvatarImage src={avatarSrc} alt={displayName} />
+                        <AvatarFallback>{avatarFallback}</AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground">
+                          {displayName}{' '}
+                          <span className="font-normal text-muted-foreground">{actionText}</span>
+                          {targetText && (
+                            <span className="font-semibold text-primary"> "{targetText}"</span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                          {formatTimestamp(item.timestamp)}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             ))}
           </div>

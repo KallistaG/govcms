@@ -34,8 +34,12 @@ import {
   TableCell,
   Checkbox,
 } from '@govcms/ui';
+import { useAuth } from '../../../../context/auth-context';
+import { AdminAccessState } from '../../../../components/auth/admin-access-state';
+import { canManageUsers } from '../../../../lib/admin-permissions';
 
 export default function UserManagementPage() {
+  const { user } = useAuth();
   const [search, setSearch] = React.useState('');
   const [roleFilter, setRoleFilter] = React.useState('ALL');
 
@@ -47,6 +51,15 @@ export default function UserManagementPage() {
   const updateUserMutation = useUpdateUser();
   const resetPasswordMutation = useResetUserPassword();
   const toggleStatusMutation = useToggleUserStatus();
+
+  if (!canManageUsers(user)) {
+    return (
+      <AdminAccessState
+        title="User management restricted"
+        message="You do not have permission to manage user accounts."
+      />
+    );
+  }
 
   const handleCreateUser = () => {
     setEditingUser(null);

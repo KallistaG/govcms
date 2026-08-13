@@ -19,6 +19,8 @@ export * from './hooks/use-debounce';
 export * from './components/layout/Header';
 export * from './components/layout/Sidebar';
 export * from './components/layout/DashboardShell';
+export type { MenuItem, SubMenuItem, SidebarProps } from './components/layout/Sidebar';
+export type { DashboardShellProps, BreadcrumbItem } from './components/layout/DashboardShell';
 
 export * from './components/dashboard/StatCard';
 export * from './components/dashboard/ActivityFeed';

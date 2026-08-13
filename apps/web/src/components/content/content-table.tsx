@@ -56,8 +56,14 @@ interface ContentTableProps {
   onPageChange: (page: number) => void;
   onEditItem: (item: ContentItem) => void;
   onDeleteItem: (id: string) => void;
+  onStatusChange?: (item: ContentItem, status: ContentItem['status']) => void;
   onBulkAction: (action: 'delete' | 'publish' | 'archive', ids: string[]) => void;
   onCreateNew: () => void;
+  canCreateContent?: boolean;
+  canPublishContent?: boolean;
+  canDeleteContent?: boolean;
+  canArchiveContent?: boolean;
+  canEditContent?: boolean;
   selectedStatus?: string;
   selectedType?: string;
 }
@@ -72,8 +78,14 @@ export const ContentTable: React.FC<ContentTableProps> = ({
   onPageChange,
   onEditItem,
   onDeleteItem,
+  onStatusChange,
   onBulkAction,
   onCreateNew,
+  canCreateContent = true,
+  canPublishContent = true,
+  canDeleteContent = true,
+  canArchiveContent = true,
+  canEditContent = true,
   selectedStatus = '',
   selectedType = '',
 }) => {
@@ -164,24 +176,66 @@ export const ContentTable: React.FC<ContentTableProps> = ({
       header: 'Actions',
       cell: ({ row }) => {
         const item = row.original;
+        const isPublished = item.status === 'PUBLISHED';
+        const isArchived = item.status === 'ARCHIVED';
         return (
           <div className="flex items-center gap-1 justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs font-semibold"
-              onClick={() => onEditItem(item)}
-            >
-              <Edit className="h-3.5 w-3.5 mr-1" /> Edit
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
-              onClick={() => onDeleteItem(item.id)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            {canEditContent && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs font-semibold"
+                onClick={() => onEditItem(item)}
+              >
+                <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            )}
+
+            {canEditContent && !canPublishContent && !isPublished && item.status === 'DRAFT' && onStatusChange && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs font-semibold text-amber-600 hover:bg-amber-500/10"
+                onClick={() => onStatusChange(item, 'PENDING_REVIEW')}
+              >
+                Submit for Review
+              </Button>
+            )}
+
+            {canPublishContent && onStatusChange && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/10"
+                disabled={isPublished}
+                onClick={() => onStatusChange(item, 'PUBLISHED')}
+              >
+                {isPublished ? 'Published' : 'Publish'}
+              </Button>
+            )}
+
+            {canArchiveContent && onStatusChange && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs font-semibold text-amber-700 hover:bg-amber-500/10"
+                disabled={isArchived}
+                onClick={() => onStatusChange(item, 'ARCHIVED')}
+              >
+                {isArchived ? 'Archived' : 'Archive'}
+              </Button>
+            )}
+
+            {canDeleteContent && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+                onClick={() => onDeleteItem(item.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
         );
       },
@@ -258,6 +312,14 @@ export const ContentTable: React.FC<ContentTableProps> = ({
             </button>
             <button
               className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                selectedStatus === 'PENDING_REVIEW' ? 'bg-background shadow-2xs font-bold text-blue-600' : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => onStatusFilterChange('PENDING_REVIEW')}
+            >
+              In Review
+            </button>
+            <button
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
                 selectedStatus === 'ARCHIVED' ? 'bg-background shadow-2xs font-bold text-rose-600' : 'text-muted-foreground hover:text-foreground'
               }`}
               onClick={() => onStatusFilterChange('ARCHIVED')}
@@ -278,9 +340,11 @@ export const ContentTable: React.FC<ContentTableProps> = ({
             <option value="EVENT">Events</option>
           </select>
 
-          <Button onClick={onCreateNew} size="sm" className="font-bold gap-1 shadow-xs">
-            <Plus className="h-4 w-4" /> New Content
-          </Button>
+          {canCreateContent && (
+            <Button onClick={onCreateNew} size="sm" className="font-bold gap-1 shadow-xs">
+              <Plus className="h-4 w-4" /> New Content
+            </Button>
+          )}
         </div>
       </div>
 
@@ -296,39 +360,45 @@ export const ContentTable: React.FC<ContentTableProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs font-semibold gap-1 text-emerald-600 border-emerald-600/30 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-              onClick={() => {
-                onBulkAction('publish', selectedIds);
-                table.toggleAllPageRowsSelected(false);
-              }}
-            >
-              <Globe className="h-3.5 w-3.5" /> Bulk Publish
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs font-semibold gap-1 text-amber-600 border-amber-600/30 hover:bg-amber-50 dark:hover:bg-amber-950"
-              onClick={() => {
-                onBulkAction('archive', selectedIds);
-                table.toggleAllPageRowsSelected(false);
-              }}
-            >
-              <Archive className="h-3.5 w-3.5" /> Bulk Archive
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="h-8 text-xs font-semibold gap-1"
-              onClick={() => {
-                onBulkAction('delete', selectedIds);
-                table.toggleAllPageRowsSelected(false);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Bulk Delete
-            </Button>
+            {canPublishContent && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs font-semibold gap-1 text-emerald-600 border-emerald-600/30 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                onClick={() => {
+                  onBulkAction('publish', selectedIds);
+                  table.toggleAllPageRowsSelected(false);
+                }}
+              >
+                <Globe className="h-3.5 w-3.5" /> Bulk Publish
+              </Button>
+            )}
+            {canArchiveContent && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs font-semibold gap-1 text-amber-600 border-amber-600/30 hover:bg-amber-50 dark:hover:bg-amber-950"
+                onClick={() => {
+                  onBulkAction('archive', selectedIds);
+                  table.toggleAllPageRowsSelected(false);
+                }}
+              >
+                <Archive className="h-3.5 w-3.5" /> Bulk Archive
+              </Button>
+            )}
+            {canDeleteContent && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 text-xs font-semibold gap-1"
+                onClick={() => {
+                  onBulkAction('delete', selectedIds);
+                  table.toggleAllPageRowsSelected(false);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Bulk Delete
+              </Button>
+            )}
           </div>
         </div>
       )}

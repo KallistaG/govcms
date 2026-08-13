@@ -22,13 +22,26 @@ import {
   TableHead,
   TableCell,
 } from '@govcms/ui';
+import { useAuth } from '../../../../../context/auth-context';
+import { AdminAccessState } from '../../../../../components/auth/admin-access-state';
+import { canReadAuditLogs } from '../../../../../lib/admin-permissions';
 
 export default function AuditLogsPage() {
+  const { user } = useAuth();
   const [search, setSearch] = React.useState('');
   const [actionFilter, setActionFilter] = React.useState('ALL');
   const [entityFilter, setEntityFilter] = React.useState('ALL');
 
   const { data: logs = [], isLoading } = useAuditLogs(search, actionFilter, entityFilter);
+
+  if (!canReadAuditLogs(user)) {
+    return (
+      <AdminAccessState
+        title="Audit logs restricted"
+        message="You do not have permission to view the system audit trail."
+      />
+    );
+  }
 
   const handleExportCsv = () => {
     downloadAuditLogsCsv(logs);

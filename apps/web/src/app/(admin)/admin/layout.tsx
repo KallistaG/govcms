@@ -7,10 +7,12 @@ import { ProtectedRoute } from '../../../components/auth/protected-route';
 import { ReactQueryProvider } from '../../../providers/query-provider';
 import { usePathname } from 'next/navigation';
 import { Toaster } from 'sonner';
+import { buildAdminSidebarItems } from '../../../lib/admin-permissions';
 
 function AdminShellContent({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const sidebarItems = React.useMemo(() => buildAdminSidebarItems(user), [user]);
 
   const isAuthPage = pathname === '/admin/login' || pathname === '/admin/reset-password';
 
@@ -26,6 +28,7 @@ function AdminShellContent({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
       <DashboardShell
+        sidebarItems={sidebarItems}
         title="Government Portal Dashboard"
         description="System overview, live publication status, audit logs, and agency content management."
         sidebarProps={{

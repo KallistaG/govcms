@@ -14,8 +14,18 @@ import { ContentModal } from '../../../../components/content/content-modal';
 import { FileText, Newspaper, Megaphone, Calendar, Layers, Plus } from 'lucide-react';
 import { Button } from '@govcms/ui';
 import { toast } from 'sonner';
+import { useAuth } from '../../../../context/auth-context';
+import {
+  canAccessContent,
+  canCreateContent,
+  canPublishContent,
+  canDeleteContent,
+  canArchiveContent,
+} from '../../../../lib/admin-permissions';
+import { AdminAccessState } from '../../../../components/auth/admin-access-state';
 
 export default function ContentManagementPage() {
+  const { user } = useAuth();
   const [search, setSearch] = React.useState('');
   const [status, setStatus] = React.useState('');
   const [type, setType] = React.useState('');
@@ -39,6 +49,21 @@ export default function ContentManagementPage() {
   const updateMutation = useUpdateContent();
   const deleteMutation = useDeleteContent();
   const bulkMutation = useBulkAction();
+
+  const canViewContent = canAccessContent(user);
+  const canCreate = canCreateContent(user);
+  const canPublish = canPublishContent(user);
+  const canDelete = canDeleteContent(user);
+  const canArchive = canArchiveContent(user);
+
+  if (!canViewContent) {
+    return (
+      <AdminAccessState
+        title="Content access restricted"
+        message="You do not have permission to view the content management workspace."
+      />
+    );
+  }
 
   const handleOpenCreate = () => {
     setEditingItem(null);
@@ -65,6 +90,19 @@ export default function ContentManagementPage() {
       await deleteMutation.mutateAsync(id);
       toast.error('Content item moved to trash');
     }
+  };
+
+  const handleStatusChange = async (item: ContentItem, status: ContentItem['status']) => {
+    await updateMutation.mutateAsync({ id: item.id, data: { status } });
+    toast.success(
+      status === 'PENDING_REVIEW'
+        ? `Submitted "${item.title}" for review`
+        : status === 'PUBLISHED'
+        ? `Published "${item.title}"`
+        : status === 'ARCHIVED'
+        ? `Archived "${item.title}"`
+        : `Updated "${item.title}"`,
+    );
   };
 
   const handleBulkAction = async (action: 'delete' | 'publish' | 'archive', ids: string[]) => {
@@ -184,9 +222,15 @@ export default function ContentManagementPage() {
         onPageChange={setPage}
         onEditItem={handleOpenEdit}
         onDeleteItem={handleDeleteItem}
+        onStatusChange={handleStatusChange}
         onBulkAction={handleBulkAction}
         onCreateNew={handleOpenCreate}
-      />
+        canCreateContent={canCreate}
+        canPublishContent={canPublish}
+        canDeleteContent={canDelete}
+        canArchiveContent={canArchive}
+        canEditContent={canViewContent}
+        />
 
       <ContentModal
         isOpen={isModalOpen}
@@ -194,6 +238,7 @@ export default function ContentManagementPage() {
         onSubmit={handleModalSubmit}
         initialData={editingItem}
         defaultType={activeTab !== 'ALL' ? activeTab : 'PAGE_DOCUMENT'}
+        canPublishContent={canPublish}
       />
     </div>
   );

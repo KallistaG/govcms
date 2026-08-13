@@ -115,6 +115,7 @@ export interface SidebarProps {
   onToggleCollapse?: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
+  items?: MenuItem[];
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -123,7 +124,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse: externalOnToggleCollapse,
   isMobileOpen = false,
   onCloseMobile,
+  items,
 }) => {
+  const navigationItems = items?.length ? items : defaultMenuTree;
+
   // Local state persistence for collapsed state if external handlers not passed
   const [internalCollapsed, setInternalCollapsed] = React.useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -163,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderNavItems = (inDrawer = false) => (
     <TooltipProvider delayDuration={100}>
       <div className="space-y-1 px-2.5 py-3">
-        {defaultMenuTree.map((item) => {
+        {navigationItems.map((item) => {
           const Icon = item.icon;
           const hasChildren = item.children && item.children.length > 0;
           const isOpen = !!openMenus[item.title];
