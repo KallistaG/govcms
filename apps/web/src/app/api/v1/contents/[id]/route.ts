@@ -9,6 +9,15 @@ import {
 } from '@/lib/cms-access';
 import { writeAuditLog } from '@/lib/audit';
 
+function normalizeString(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
 function isPublishRequest(body: Record<string, unknown>): boolean {
   return body.isPublished === true || body.status === 'PUBLISHED';
 }
@@ -72,6 +81,9 @@ export async function PUT(
         type: typeof body.type === 'string' ? (body.type as ContentTypeEnum) : existing.type,
         body: typeof body.body === 'string' ? body.body : existing.body,
         summary: typeof body.summary === 'string' ? body.summary : existing.summary,
+        featuredImage: Object.prototype.hasOwnProperty.call(body, 'featuredImage')
+          ? normalizeString(body.featuredImage)
+          : existing.featuredImage,
         status: wantsPublish ? ('PUBLISHED' as ContentStatusEnum) : (typeof body.status === 'string' ? (body.status as ContentStatusEnum) : existing.status),
         publishedAt: wantsPublish ? existing.publishedAt ?? new Date() : existing.publishedAt,
       },

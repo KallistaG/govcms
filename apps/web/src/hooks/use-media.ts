@@ -18,16 +18,31 @@ export interface MediaAsset {
   id: string;
   filename: string;
   originalName: string;
+  originalFilename?: string;
+  publicId: string;
   mimeType: string;
   size: number;
   url: string;
+  secureUrl?: string;
   thumbnailUrl?: string;
+  resourceType?: string;
+  extension?: string | null;
+  width?: number | null;
+  height?: number | null;
   dimensions?: string;
   altText?: string;
   caption?: string;
+  title?: string | null;
+  description?: string | null;
   isOptimized?: boolean;
   folderId?: string | null;
+  folderName?: string | null;
+  folderSlug?: string | null;
+  agencyId?: string;
+  uploadedById?: string;
   uploadedByName: string;
+  uploadedByAvatar?: string | null;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -97,6 +112,7 @@ export function useMediaAssets(params?: { folderId?: string; search?: string; mi
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) return data;
+          if (Array.isArray(data?.data)) return data.data;
         }
       } catch {
         // fallback
@@ -131,11 +147,12 @@ export function useUploadMediaAsset() {
 export function useUpdateMediaAsset() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<MediaAsset> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<MediaAsset> | FormData }) => {
+      const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
       const res = await fetch(`${API_URL}/media/assets/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-        body: JSON.stringify(data),
+        headers: isFormData ? getAuthHeader() : { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: isFormData ? data : JSON.stringify(data),
       });
 
       if (!res.ok) {
@@ -202,7 +219,18 @@ export function useStorageStats() {
           headers: getAuthHeader(),
         });
         if (res.ok) {
-          return await res.json();
+          const data = await res.json();
+          const totalBytes = typeof data?.totalBytes === 'number' ? data.totalBytes : typeof data?.quotaBytes === 'number' ? data.quotaBytes : 50 * 1024 * 1024 * 1024;
+          const usedBytes = typeof data?.usedBytes === 'number' ? data.usedBytes : 0;
+          const percentage = typeof data?.percentage === 'number' ? data.percentage : totalBytes > 0 ? Math.min(Math.round((usedBytes / totalBytes) * 100), 100) : 0;
+          const fileCount = typeof data?.fileCount === 'number' ? data.fileCount : 0;
+
+          return {
+            usedBytes,
+            totalBytes,
+            percentage,
+            fileCount,
+          };
         }
       } catch {
         // fallback

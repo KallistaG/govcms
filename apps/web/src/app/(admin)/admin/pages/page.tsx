@@ -9,11 +9,8 @@ import {
   PageBlock,
 } from '../../../../hooks/use-page-builder';
 import {
-  Sparkles,
   Plus,
   Trash2,
-  ChevronDown,
-  ChevronUp,
   Save,
   FileText,
 } from 'lucide-react';
@@ -25,6 +22,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter,
   Input,
   Label,
   Badge,
@@ -32,6 +30,11 @@ import {
 import { useAuth } from '../../../../context/auth-context';
 import { AdminAccessState } from '../../../../components/auth/admin-access-state';
 import { canEditHomepage } from '../../../../lib/admin-permissions';
+import { MediaPicker } from '../../../../components/media/media-picker';
+
+function isImageAwareBlock(type: BlockType): boolean {
+  return type === 'image' || type === 'hero' || type === 'gallery';
+}
 
 export default function PagesBlockBuilderPage() {
   const { user } = useAuth();
@@ -41,13 +44,20 @@ export default function PagesBlockBuilderPage() {
 
   const [blocks, setBlocks] = React.useState<PageBlock[]>([]);
   const [hasChanges, setHasChanges] = React.useState(false);
+  const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
   const canEdit = canEditHomepage(user);
 
   React.useEffect(() => {
     if (initialBlocks.length > 0 && !hasChanges) {
       setBlocks(initialBlocks);
+      setSelectedBlockId(initialBlocks[0]?.id || null);
+    } else if (!initialBlocks.length && !hasChanges) {
+      setBlocks([]);
+      setSelectedBlockId(null);
     }
   }, [initialBlocks, hasChanges]);
+
+  const selectedBlock = blocks.find((block) => block.id === selectedBlockId) || null;
 
   if (!canEdit) {
     return (
@@ -57,6 +67,11 @@ export default function PagesBlockBuilderPage() {
       />
     );
   }
+
+  const updateBlock = (blockId: string, updater: (block: PageBlock) => PageBlock) => {
+    setBlocks((prev) => prev.map((block) => (block.id === blockId ? updater(block) : block)));
+    setHasChanges(true);
+  };
 
   const handleAddBlock = (type: BlockType) => {
     const meta = BLOCK_TYPE_META[type];
@@ -69,12 +84,16 @@ export default function PagesBlockBuilderPage() {
     };
 
     setBlocks((prev) => [...prev, newBlock]);
+    setSelectedBlockId(newBlock.id);
     setHasChanges(true);
     toast.success(`Added ${meta.label} block`);
   };
 
   const handleRemoveBlock = (id: string) => {
     setBlocks((prev) => prev.filter((b) => b.id !== id));
+    if (selectedBlockId === id) {
+      setSelectedBlockId(null);
+    }
     setHasChanges(true);
   };
 
@@ -92,7 +111,7 @@ export default function PagesBlockBuilderPage() {
             <FileText className="h-6 w-6 text-primary" /> Custom Page Builder
           </h1>
           <p className="text-xs text-muted-foreground">
-            Configure dynamic block elements for government pages (`/pages/${selectedSlug}`).
+            Configure dynamic block elements for government pages (`/pages/{selectedSlug}`).
           </p>
         </div>
 
@@ -103,6 +122,7 @@ export default function PagesBlockBuilderPage() {
             onChange={(e) => {
               setSelectedSlug(e.target.value);
               setHasChanges(false);
+              setSelectedBlockId(null);
             }}
           >
             <option value="about">/pages/about (About Agency)</option>
@@ -131,14 +151,22 @@ export default function PagesBlockBuilderPage() {
             <div className="space-y-3">
               {blocks.map((block, idx) => {
                 const meta = BLOCK_TYPE_META[block.type] || { label: block.type };
+                const isSelected = block.id === selectedBlockId;
+                const imageUrl = typeof block.config?.imageUrl === 'string' ? block.config.imageUrl : '';
+                const textValue = String(block.config?.text || '');
+
                 return (
-                  <Card key={block.id} className="border bg-card p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                  <Card
+                    key={block.id}
+                    className={`border bg-card p-4 transition-all ${isSelected ? 'ring-2 ring-primary border-primary' : ''}`}
+                    onClick={() => setSelectedBlockId(block.id)}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Badge variant="outline" className="font-mono text-[10px]">#{idx + 1}</Badge>
                         <span className="font-bold text-xs">{meta.label}</span>
                         <span className="text-[11px] text-muted-foreground truncate max-w-xs">
-                          {String(block.config?.text || block.type)}
+                          {imageUrl ? 'Image selected' : textValue || String(block.config?.text || block.type)}
                         </span>
                       </div>
 
@@ -146,7 +174,10 @@ export default function PagesBlockBuilderPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive"
-                        onClick={() => handleRemoveBlock(block.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveBlock(block.id);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -158,7 +189,7 @@ export default function PagesBlockBuilderPage() {
           )}
         </div>
 
-        <div>
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-bold">Add Block Element</CardTitle>
@@ -181,6 +212,65 @@ export default function PagesBlockBuilderPage() {
               })}
             </CardContent>
           </Card>
+
+          {selectedBlock && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-bold">Edit Selected Block</CardTitle>
+                <CardDescription className="text-xs">
+                  Update the shared config for this block.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Text</Label>
+                  <Input
+                    value={String(selectedBlock.config?.text || '')}
+                    onChange={(e) =>
+                      updateBlock(selectedBlock.id, (block) => ({
+                        ...block,
+                        config: {
+                          ...block.config,
+                          text: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+
+                {isImageAwareBlock(selectedBlock.type) && (
+                  <MediaPicker
+                    label="Image"
+                    placeholder="Choose an image for this block"
+                    value={typeof selectedBlock.config?.imageUrl === 'string' ? selectedBlock.config.imageUrl : null}
+                    onChange={(url) =>
+                      updateBlock(selectedBlock.id, (block) => ({
+                        ...block,
+                        config: {
+                          ...block.config,
+                          imageUrl: url || '',
+                        },
+                      }))
+                    }
+                    mimeType="image"
+                  />
+                )}
+
+                {isImageAwareBlock(selectedBlock.type) && typeof selectedBlock.config?.imageUrl === 'string' && selectedBlock.config.imageUrl && (
+                  <div className="rounded-lg border overflow-hidden bg-muted/20">
+                    <img
+                      src={selectedBlock.config.imageUrl}
+                      alt="Selected block image"
+                      className="h-44 w-full object-cover"
+                    />
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="text-[11px] text-muted-foreground border-t px-6 py-4">
+                Block configuration is saved as JSON with the page layout.
+              </CardFooter>
+            </Card>
+          )}
         </div>
       </div>
     </div>

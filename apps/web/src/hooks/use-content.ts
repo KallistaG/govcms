@@ -13,7 +13,7 @@ export interface ContentItem {
   body: string;
   type: 'PAGE_DOCUMENT' | 'PRESS_RELEASE' | 'PUBLIC_NOTICE' | 'EVENT';
   status: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED';
-  featuredImage?: string;
+  featuredImage?: string | null;
   eventDate?: string;
   location?: string;
   authorName: string;

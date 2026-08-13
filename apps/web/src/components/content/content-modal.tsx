@@ -14,6 +14,7 @@ import {
   Label,
   TipTapEditor,
 } from '@govcms/ui';
+import { MediaPicker } from '../media/media-picker';
 
 interface ContentModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
   const [title, setTitle] = React.useState('');
   const [summary, setSummary] = React.useState('');
   const [body, setBody] = React.useState('');
+  const [featuredImage, setFeaturedImage] = React.useState('');
   const [type, setType] = React.useState<ContentItem['type']>(
     (defaultType as ContentItem['type']) || 'PAGE_DOCUMENT',
   );
@@ -68,6 +70,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
       setTitle(initialData.title);
       setSummary(initialData.summary || '');
       setBody(initialData.body);
+      setFeaturedImage(initialData.featuredImage || '');
       setType(initialData.type);
       setStatus(initialData.status);
       setEventDate(initialData.eventDate || '');
@@ -76,6 +79,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
       setTitle('');
       setSummary('');
       setBody('');
+      setFeaturedImage('');
       setType((defaultType as ContentItem['type']) || 'PAGE_DOCUMENT');
       setStatus('DRAFT');
       setEventDate('');
@@ -95,6 +99,7 @@ export const ContentModal: React.FC<ContentModalProps> = ({
         title,
         summary,
         body,
+        featuredImage: featuredImage || null,
         type,
         status,
         eventDate: type === 'EVENT' && eventDate ? eventDate : undefined,
@@ -221,6 +226,25 @@ export const ContentModal: React.FC<ContentModalProps> = ({
                   setBody(html);
                 }}
               />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <MediaPicker
+                label="Featured Image"
+                placeholder="Choose a featured image for content cards and social previews"
+                value={featuredImage || null}
+                onChange={(url) => setFeaturedImage(url || '')}
+                mimeType="image"
+              />
+              {featuredImage && (
+                <div className="rounded-lg border bg-muted/20 overflow-hidden">
+                  <img
+                    src={featuredImage}
+                    alt="Featured image preview"
+                    className="h-44 w-full object-cover"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

@@ -66,3 +66,28 @@ export function requireHomepagePublishAccess(actor: AuthenticatedUser): Authenti
   return requirePermission(actor, ['content:publish']);
 }
 
+export function requireMediaAccess(actor: AuthenticatedUser): AuthenticatedUser {
+  if (
+    actor.role === 'SUPER_ADMIN' ||
+    actor.role === 'ADMINISTRATOR' ||
+    actor.role === 'EDITOR' ||
+    actor.role === 'PUBLISHER'
+  ) {
+    return actor;
+  }
+
+  return requirePermission(actor, ['media:upload']);
+}
+
+export function requireMediaUploadAccess(actor: AuthenticatedUser): AuthenticatedUser {
+  return requireMediaAccess(actor);
+}
+
+export function requireMediaDeleteAccess(actor: AuthenticatedUser): AuthenticatedUser {
+  if (actor.role === 'SUPER_ADMIN' || actor.role === 'ADMINISTRATOR') {
+    return actor;
+  }
+
+  return requirePermission(actor, ['media:delete']);
+}
+

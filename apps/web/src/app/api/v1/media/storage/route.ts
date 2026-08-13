@@ -1,25 +1,42 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@govcms/database';
+import { AuthConfigurationError, AuthError, requireAuth } from '@/lib/server-auth';
+import { requireAgencyScopedAccess, requireMediaAccess } from '@/lib/cms-access';
 
-export async function GET() {
+export const runtime = 'nodejs';
+
+export async function GET(request: Request) {
   try {
-    const assets = await prisma.mediaAsset.findMany();
-    const usedBytes = assets.reduce((sum, a) => sum + (a.size || 0), 0);
-    const quotaBytes = 50 * 1024 * 1024 * 1024; // 50 GB
-    const percentage = Math.min(Math.round((usedBytes / quotaBytes) * 100), 100);
+    const actor = requireMediaAccess(await requireAuth(request));
+    const agencyId = requireAgencyScopedAccess(actor);
+
+    const assets = await prisma.mediaAsset.findMany({
+      where: {
+        deletedAt: null,
+        ...(agencyId ? { agencyId } : {}),
+      },
+      select: {
+        id: true,
+        size: true,
+      },
+    });
+
+    const usedBytes = assets.reduce((sum, asset) => sum + (asset.size || 0), 0);
+    const totalBytes = 50 * 1024 * 1024 * 1024;
+    const percentage = totalBytes > 0 ? Math.min(Math.round((usedBytes / totalBytes) * 100), 100) : 0;
 
     return NextResponse.json({
       fileCount: assets.length,
       usedBytes,
-      quotaBytes,
-      percentage: percentage || 28,
+      totalBytes,
+      quotaBytes: totalBytes,
+      percentage,
     });
-  } catch {
-    return NextResponse.json({
-      fileCount: 24,
-      usedBytes: 14.2 * 1024 * 1024 * 1024,
-      quotaBytes: 50 * 1024 * 1024 * 1024,
-      percentage: 28,
-    });
+  } catch (error: any) {
+    if (error instanceof AuthError || error instanceof AuthConfigurationError) {
+      return NextResponse.json({ message: error.message }, { status: error.status ?? 500 });
+    }
+
+    return NextResponse.json({ message: error?.message || 'Failed to load storage statistics' }, { status: 500 });
   }
 }

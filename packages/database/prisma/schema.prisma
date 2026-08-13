@@ -172,29 +172,41 @@ model MediaFolder {
 }
 
 model MediaAsset {
-  id           String       @id @default(uuid())
-  filename     String
-  originalName String
-  mimeType     String
-  size         Int
-  url          String
-  thumbnailUrl String?
-  dimensions   String?      // e.g. "1920x1080"
-  altText      String?
-  caption      String?
-  isOptimized  Boolean      @default(true)
-  folderId     String?
-  agencyId     String
-  uploadedById String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id               String       @id @default(uuid())
+  filename         String
+  originalName     String
+  originalFilename String?
+  publicId         String       @unique
+  mimeType         String
+  extension        String?
+  resourceType     String       @default("image")
+  size             Int
+  width            Int?
+  height           Int?
+  url              String
+  secureUrl        String?
+  thumbnailUrl     String?
+  dimensions       String?      // e.g. "1920x1080"
+  title            String?
+  description      String?
+  altText          String?
+  caption          String?
+  isOptimized      Boolean      @default(true)
+  folderId         String?
+  agencyId         String
+  uploadedById     String
+  deletedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   folder       MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
   agency       Agency       @relation(fields: [agencyId], references: [id])
   uploadedBy   User         @relation("AssetUploader", fields: [uploadedById], references: [id])
 
   @@index([agencyId, folderId])
+  @@index([agencyId, deletedAt, createdAt])
   @@index([mimeType])
+  @@index([resourceType])
   @@index([createdAt])
   @@map("media_assets")
 }

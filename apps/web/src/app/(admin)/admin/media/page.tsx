@@ -11,7 +11,6 @@ import {
   useBulkDeleteMediaAssets,
   useStorageStats,
   MediaAsset,
-  MediaFolder,
 } from '../../../../hooks/use-media';
 import { MediaUploadModal } from '../../../../components/media/media-upload-modal';
 import { MediaPreviewModal } from '../../../../components/media/media-preview-modal';
@@ -30,7 +29,6 @@ import {
   Edit,
   HardDrive,
   Eye,
-  Image as ImageIcon,
 } from 'lucide-react';
 import {
   Button,
@@ -44,6 +42,11 @@ import {
   TableHead,
   TableCell,
   Checkbox,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
 } from '@govcms/ui';
 
 export default function MediaLibraryPage() {
@@ -73,10 +76,15 @@ export default function MediaLibraryPage() {
   const bulkDeleteMutation = useBulkDeleteMediaAssets();
   const { data: storage } = useStorageStats();
 
+  React.useEffect(() => {
+    setSelectedIds([]);
+  }, [currentFolderId, search, mimeGroup]);
+
   const handleCreateFolder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFolderName) return;
-    await createFolderMutation.mutateAsync({ name: newFolderName, parentId: currentFolderId });
+    if (!newFolderName.trim()) return;
+
+    await createFolderMutation.mutateAsync({ name: newFolderName.trim(), parentId: currentFolderId });
     setNewFolderName('');
     setIsNewFolderOpen(false);
   };
@@ -125,20 +133,18 @@ export default function MediaLibraryPage() {
         </div>
       </div>
 
-      {/* Storage Quota Usage Header Card */}
       <div className="p-4 bg-card border rounded-xl shadow-xs space-y-2">
         <div className="flex items-center justify-between text-xs font-semibold">
           <span className="flex items-center gap-1.5 font-bold text-foreground">
             <HardDrive className="h-4 w-4 text-primary" /> Agency Media Storage Quota
           </span>
           <span className="font-mono text-muted-foreground">
-            {storage?.fileCount || assets?.length || 0} Files • {((storage?.usedBytes || 0) / (1024 * 1024 * 1024)).toFixed(2)} GB / 50.0 GB Used ({storage?.percentage || 28}%)
+            {storage?.fileCount ?? assets?.length ?? 0} Files • {((storage?.usedBytes || 0) / (1024 * 1024 * 1024)).toFixed(2)} GB / {((storage?.totalBytes || 50 * 1024 * 1024 * 1024) / (1024 * 1024 * 1024)).toFixed(1)} GB Used ({storage?.percentage ?? 0}%)
           </span>
         </div>
-        <Progress value={storage?.percentage || 28} className="h-2" />
+        <Progress value={storage?.percentage ?? 0} className="h-2" />
       </div>
 
-      {/* Search & Folder Controls Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card p-3 rounded-xl border">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative flex-1">
@@ -166,6 +172,7 @@ export default function MediaLibraryPage() {
 
           <div className="flex items-center border rounded-lg p-0.5 bg-muted/40">
             <button
+              type="button"
               className={`p-1.5 rounded-md ${viewMode === 'grid' ? 'bg-background shadow-2xs font-bold text-primary' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('grid')}
               title="Grid View"
@@ -173,6 +180,7 @@ export default function MediaLibraryPage() {
               <Grid className="h-4 w-4" />
             </button>
             <button
+              type="button"
               className={`p-1.5 rounded-md ${viewMode === 'table' ? 'bg-background shadow-2xs font-bold text-primary' : 'text-muted-foreground'}`}
               onClick={() => setViewMode('table')}
               title="Table View"
@@ -183,10 +191,10 @@ export default function MediaLibraryPage() {
         </div>
       </div>
 
-      {/* Media Folders Bar */}
       {folders && folders.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <button
+            type="button"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shrink-0 transition-all ${
               !currentFolderId ? 'bg-primary text-primary-foreground border-primary font-bold' : 'bg-card text-muted-foreground hover:bg-accent'
             }`}
@@ -196,6 +204,7 @@ export default function MediaLibraryPage() {
           </button>
           {folders.map((folder) => (
             <button
+              type="button"
               key={folder.id}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold shrink-0 transition-all ${
                 currentFolderId === folder.id ? 'bg-primary text-primary-foreground border-primary font-bold' : 'bg-card text-muted-foreground hover:bg-accent'
@@ -208,7 +217,6 @@ export default function MediaLibraryPage() {
         </div>
       )}
 
-      {/* Selected Items Bulk Toolbar */}
       {selectedIds.length > 0 && (
         <div className="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-lg">
           <span className="text-xs font-bold text-primary">{selectedIds.length} asset(s) selected</span>
@@ -218,7 +226,6 @@ export default function MediaLibraryPage() {
         </div>
       )}
 
-      {/* Main Asset View */}
       {isLoading ? (
         <div className="h-40 flex items-center justify-center text-xs text-muted-foreground">
           Loading media library...
@@ -230,6 +237,7 @@ export default function MediaLibraryPage() {
             const isPdf = asset.mimeType.includes('pdf');
             const isVideo = asset.mimeType.startsWith('video/');
             const isSelected = selectedIds.includes(asset.id);
+            const assetLabel = asset.title || asset.filename;
 
             return (
               <div
@@ -250,7 +258,11 @@ export default function MediaLibraryPage() {
                   onClick={() => setPreviewAsset(asset)}
                 >
                   {isImage ? (
-                    <img src={asset.url} alt={asset.altText || asset.filename} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    <img
+                      src={asset.thumbnailUrl || asset.secureUrl || asset.url}
+                      alt={asset.altText || assetLabel}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
                   ) : isPdf ? (
                     <FileText className="h-10 w-10 text-amber-500" />
                   ) : isVideo ? (
@@ -279,8 +291,8 @@ export default function MediaLibraryPage() {
                 </div>
 
                 <div className="p-2.5 space-y-0.5">
-                  <p className="text-xs font-bold truncate text-foreground" title={asset.filename}>
-                    {asset.filename}
+                  <p className="text-xs font-bold truncate text-foreground" title={assetLabel}>
+                    {assetLabel}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-mono">
                     {Math.round(asset.size / 1024)} KB • {asset.dimensions || 'File'}
@@ -310,45 +322,47 @@ export default function MediaLibraryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets?.map((asset) => (
-                <TableRow key={asset.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedIds.includes(asset.id)}
-                      onCheckedChange={() => handleToggleSelect(asset.id)}
-                    />
-                  </TableCell>
-                  <TableCell className="font-bold text-xs">
-                    <span className="hover:text-primary cursor-pointer" onClick={() => setPreviewAsset(asset)}>
-                      {asset.filename}
-                    </span>
-                  </TableCell>
-                  <TableCell><Badge variant="outline" className="text-[10px]">{asset.mimeType}</Badge></TableCell>
-                  <TableCell className="font-mono text-xs">{Math.round(asset.size / 1024)} KB</TableCell>
-                  <TableCell className="text-xs">{asset.uploadedByName}</TableCell>
-                  <TableCell className="text-xs font-mono">{new Date(asset.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => setPreviewAsset(asset)}>
-                      Preview
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {assets?.map((asset) => {
+                const assetLabel = asset.title || asset.filename;
+                const uploadedAt = asset.createdAt ? new Date(asset.createdAt) : null;
+                const uploadedAtLabel = uploadedAt && !Number.isNaN(uploadedAt.getTime()) ? uploadedAt.toLocaleDateString() : 'Unknown time';
+
+                return (
+                  <TableRow key={asset.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(asset.id)}
+                        onCheckedChange={() => handleToggleSelect(asset.id)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-bold text-xs">
+                      <span className="hover:text-primary cursor-pointer" onClick={() => setPreviewAsset(asset)}>
+                        {assetLabel}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px]">{asset.mimeType}</Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{Math.round(asset.size / 1024)} KB</TableCell>
+                    <TableCell className="text-xs">{asset.uploadedByName || 'System'}</TableCell>
+                    <TableCell className="text-xs font-mono">{uploadedAtLabel}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => setPreviewAsset(asset)}>
+                        Preview
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {/* Modals */}
       <MediaUploadModal
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
-        onUpload={async (data) => {
-          const fd = new FormData();
-          if (data.folderId) fd.append('folderId', data.folderId);
-          if (data.altText) fd.append('altText', data.altText);
-          await uploadMutation.mutateAsync(fd);
-        }}
+        onUpload={async (formData) => uploadMutation.mutateAsync(formData)}
         currentFolderId={currentFolderId}
       />
 
@@ -356,17 +370,25 @@ export default function MediaLibraryPage() {
         asset={previewAsset}
         isOpen={!!previewAsset}
         onClose={() => setPreviewAsset(null)}
-        onRename={(a) => { setPreviewAsset(null); setRenameAsset(a); }}
-        onReplace={(a) => { setPreviewAsset(null); setReplaceAsset(a); }}
-        onDelete={async (id) => { await deleteMutation.mutateAsync(id); }}
+        onRename={(a) => {
+          setPreviewAsset(null);
+          setRenameAsset(a);
+        }}
+        onReplace={(a) => {
+          setPreviewAsset(null);
+          setReplaceAsset(a);
+        }}
+        onDelete={async (id) => {
+          await deleteMutation.mutateAsync(id);
+        }}
       />
 
       <MediaRenameModal
         asset={renameAsset}
         isOpen={!!renameAsset}
         onClose={() => setRenameAsset(null)}
-        onRename={async (id, filename, altText) => {
-          await updateMutation.mutateAsync({ id, data: { filename, altText } });
+        onRename={async (id, data) => {
+          await updateMutation.mutateAsync({ id, data });
         }}
       />
 
@@ -374,10 +396,45 @@ export default function MediaLibraryPage() {
         asset={replaceAsset}
         isOpen={!!replaceAsset}
         onClose={() => setReplaceAsset(null)}
-        onReplace={async (id, url, size) => {
-          await updateMutation.mutateAsync({ id, data: { url, size } });
+        onReplace={async (id, file) => {
+          const formData = new FormData();
+          formData.append('file', file, file.name);
+          await updateMutation.mutateAsync({ id, data: formData });
         }}
       />
+
+      {isNewFolderOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <Card className="w-full max-w-md shadow-2xl border bg-card">
+            <form onSubmit={handleCreateFolder}>
+              <CardHeader className="border-b">
+                <CardTitle className="text-lg">Create Folder</CardTitle>
+                <CardDescription className="text-xs">
+                  Organize agency media into folders.
+                </CardDescription>
+              </CardHeader>
+              <div className="p-6 space-y-4">
+                <div className="space-y-1.5">
+                  <Input
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    placeholder="Folder name"
+                    autoFocus
+                  />
+                </div>
+              </div>
+              <CardFooter className="border-t px-6 py-4 flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsNewFolderOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!newFolderName.trim()}>
+                  Create Folder
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,7 +9,16 @@ interface MediaRenameModalProps {
   asset: MediaAsset | null;
   isOpen: boolean;
   onClose: () => void;
-  onRename: (id: string, filename: string, altText: string) => Promise<void>;
+  onRename: (
+    id: string,
+    data: {
+      filename?: string;
+      title?: string;
+      altText?: string;
+      caption?: string;
+      description?: string;
+    },
+  ) => Promise<void>;
 }
 
 export const MediaRenameModal: React.FC<MediaRenameModalProps> = ({
@@ -19,13 +28,19 @@ export const MediaRenameModal: React.FC<MediaRenameModalProps> = ({
   onRename,
 }) => {
   const [filename, setFilename] = React.useState('');
+  const [title, setTitle] = React.useState('');
   const [altText, setAltText] = React.useState('');
+  const [caption, setCaption] = React.useState('');
+  const [description, setDescription] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   React.useEffect(() => {
     if (asset) {
-      setFilename(asset.filename);
+      setFilename(asset.filename || '');
+      setTitle(asset.title || asset.filename || '');
       setAltText(asset.altText || '');
+      setCaption(asset.caption || '');
+      setDescription(asset.description || '');
     }
   }, [asset]);
 
@@ -35,7 +50,13 @@ export const MediaRenameModal: React.FC<MediaRenameModalProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onRename(asset.id, filename, altText);
+      await onRename(asset.id, {
+        filename,
+        title,
+        altText,
+        caption,
+        description,
+      });
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -51,20 +72,20 @@ export const MediaRenameModal: React.FC<MediaRenameModalProps> = ({
               <Edit className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-lg">Rename Media Asset</CardTitle>
+              <CardTitle className="text-lg">Edit Media Metadata</CardTitle>
               <CardDescription className="text-xs">
-                Update filename and accessibility alt text for search indexing.
+                Update the display name and accessibility details for this asset.
               </CardDescription>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close metadata dialog">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="filename">Filename</Label>
+            <Label htmlFor="filename">Display Name</Label>
             <Input
               id="filename"
               value={filename}
@@ -74,12 +95,38 @@ export const MediaRenameModal: React.FC<MediaRenameModalProps> = ({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="altText">Alt Text / Caption</Label>
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="altText">Alt Text</Label>
             <Input
               id="altText"
               value={altText}
               onChange={(e) => setAltText(e.target.value)}
-              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="caption">Caption</Label>
+            <Input
+              id="caption"
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 

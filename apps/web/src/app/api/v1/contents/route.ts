@@ -18,6 +18,10 @@ function normalizeString(value: unknown): string | null {
   return trimmed || null;
 }
 
+function normalizeFeaturedImage(value: unknown): string | null {
+  return normalizeString(value);
+}
+
 async function resolveContentAgencyId(actor: { role: string; agencyId: string | null }, requestedAgencyId?: string | null): Promise<string> {
   if (actor.role === 'SUPER_ADMIN') {
     const agencyId = normalizeString(requestedAgencyId) || normalizeString(actor.agencyId);
@@ -119,6 +123,10 @@ export async function POST(request: Request) {
         type: typeof body.type === 'string' ? (body.type as ContentTypeEnum) : 'PAGE_DOCUMENT',
         body: typeof body.body === 'string' ? body.body : '',
         summary: typeof body.summary === 'string' ? body.summary : '',
+        featuredImage:
+          Object.prototype.hasOwnProperty.call(body, 'featuredImage')
+            ? normalizeFeaturedImage(body.featuredImage)
+            : null,
         status: wantsPublish ? ('PUBLISHED' as ContentStatusEnum) : 'DRAFT',
         publishedAt: wantsPublish ? new Date() : null,
         authorId: actor.id,
